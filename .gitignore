@@ -4,4 +4,6 @@ __pycache__
 .test.kra
 test.kra
 
+.sconsign.dblite
+
 
