@@ -6,6 +6,7 @@ env['version_manager_dir'] = env['pykrita_dir']+'/version_manager'
 for script in Split("""
 __init__.py
 common.py
+utils.py
 version_manager.py
 """):
     env.Install(env['version_manager_dir'], f'version_manager/{script}')
