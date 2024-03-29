@@ -6,8 +6,9 @@ from __future__ import unicode_literals
 import os
 import shutil
 import json
-import datetime
 import time
+from filelock import FileLock
+from pwd import getpwuid
 from . import common
 
 
@@ -15,7 +16,7 @@ class KritaVersionHistory(object):
     # history_dict = {'documents': {}}
     history_dict = {}
     document_dict = {'filename': '', 'thumbnail': '',
-                     'modtime': 0., 'dirname': ''}
+                     'modtime': 0., 'dirname': '', 'message': '', 'owner': ''}
 
     def __init__(self, filename):
         self._krita_file = filename
@@ -29,7 +30,8 @@ class KritaVersionHistory(object):
         self._version_directory = os.path.join(
             krita_path, '.{}'.format(self.krita_basename))
 
-        self._data_filename = os.path.join(self.data_dir, 'history.json')
+        self._data_basename = 'history.json'
+        self._data_filename = os.path.join(self.data_dir, self._data_basename)
 
         self._history = None
 
@@ -52,6 +54,11 @@ class KritaVersionHistory(object):
     def history_filename(self):
         """Absolute path to history json file"""
         return self._data_filename
+
+    @property
+    def history_basename(self):
+        """Absolute path to history json file"""
+        return self._data_basename
 
     @property
     def history(self):
@@ -96,20 +103,27 @@ class KritaVersionHistory(object):
 
         self.read_history()
 
-    def add_checkpoint(self):
+    def add_checkpoint(self, msg=''):
         """Adds a new checkpoint for the krita document.
 
             This will store a copy of the krita file as well as
-            a thumbnail and checkpoint metadata. """
+            a thumbnail and checkpoint metadata. 
 
+
+            Arguments:
+            msg - str: Checkpoint message
+            """
+
+        # check that krita file exists
         if not os.path.exists(self.krita_filename):
             common.error(f'File not found: {self.krita_filename}')
             return
 
+        # get modification time of krita file
         modtime = common.creation_date(self.krita_filename)
         dirname = 'doc_{}'.format(str(modtime).replace('.', '_'))
 
-        print(time.strftime('%Y-%m%d %H:%M:%S', time.localtime(modtime)))
+        # name of directory to hold checkpoint data
         doc_dir = os.path.join(self.data_dir, dirname)
 
         # quit if an entry for this timestamp already exists
@@ -124,16 +138,31 @@ class KritaVersionHistory(object):
                 f'Document directory already exists: {doc_dir}')
             return
 
-        self.history[modtime] = KritaVersionHistory.document_dict.copy()
+        # lock history json file
+        lock_filename = os.path.join(
+            self.data_dir, f'.{self.history_basename}.lock')
 
-        doc_data = self.history[modtime]
-        doc_data['modtime'] = modtime
-        doc_data['filename'] = self.krita_basename
-        doc_data['dirname'] = dirname
+        with FileLock(lock_filename, timeout=5):
+            self.read_history()
+            self.history[modtime] = KritaVersionHistory.document_dict.copy()
 
-        os.makedirs(doc_dir)
+            for key, value in (('modtime', modtime),
+                               ('filename', self.krita_basename),
+                               ('dirname', dirname),
+                               ('message', repr(msg)),
+                               ('author', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
+                self.history[modtime][key] = value
+            # doc_data = self.history[modtime]
+            # doc_data['modtime'] = modtime
+            # doc_data['filename'] = self.krita_basename
+            # doc_data['dirname'] = dirname
+            # doc_data['message'] = repr(msg)
+            # doc_data['author'] = getpwuid(
+            #     os.stat(self.krita_filename).st_uid).pw_name
 
-        shutil.copyfile(self.krita_filename, os.path.join(
-            doc_dir, self.krita_basename))
+            os.makedirs(doc_dir)
 
-        self.write_history()
+            shutil.copyfile(self.krita_filename, os.path.join(
+                doc_dir, self.krita_basename))
+
+            self.write_history()
