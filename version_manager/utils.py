@@ -12,27 +12,40 @@ from pwd import getpwuid
 from . import common
 
 
-class KritaVersionHistory(object):
-    # history_dict = {'documents': {}}
-    history_dict = {}
-    document_dict = {'filename': '', 'thumbnail': '',
-                     'modtime': 0., 'dirname': '', 'message': '', 'owner': ''}
+class Utils(object):
+    """Manages lower level operations for Krita document version manager"""
+
+    history_template = {}
+    document_template = {'filename': '', 'thumbnail': '',
+                         'modtime': 0., 'dirname': '', 'message': '',
+                         'owner': ''}
 
     def __init__(self, filename):
+        """
+
+        Arguments:
+        filename (str) - Krita document .kra to manage
+        """
+
         self._krita_file = filename
 
+        # check source krita document
         if not os.path.exists(self.krita_filename):
             common.error(f'File not found: {self.krita_filename}')
 
+        # get absolute path to krita document
         self._krita_file = os.path.abspath(self.krita_filename)
 
         krita_path, self._krita_basename = os.path.split(self.krita_filename)
+
+        # set path to document data directory
         self._version_directory = os.path.join(
             krita_path, '.{}'.format(self.krita_basename))
 
         self._data_basename = 'history.json'
         self._data_filename = os.path.join(self.data_dir, self._data_basename)
 
+        # dictionary holding data for all document versions
         self._history = None
 
     @property
@@ -77,7 +90,7 @@ class KritaVersionHistory(object):
 
         os.makedirs(self.data_dir)
 
-        self._history = KritaVersionHistory.history_dict.copy()
+        self._history = Utils.history_template.copy()
 
         self.write_history()
 
@@ -98,16 +111,11 @@ class KritaVersionHistory(object):
         with open(self.history_filename, 'r') as file_in:
             self._history = json.load(file_in)
 
-    def connect(self):
-        """Initialize connection to document history"""
-
-        self.read_history()
-
     def add_checkpoint(self, msg=''):
         """Adds a new checkpoint for the krita document.
 
             This will store a copy of the krita file as well as
-            a thumbnail and checkpoint metadata. 
+            a thumbnail and checkpoint metadata.
 
 
             Arguments:
@@ -146,7 +154,7 @@ class KritaVersionHistory(object):
             self.read_history()
 
             # create copy of document dictionary template
-            self.history[modtime] = KritaVersionHistory.document_dict.copy()
+            self.history[modtime] = Utils.document_template.copy()
 
             for key, value in (('modtime', modtime),
                                ('filename', self.krita_basename),

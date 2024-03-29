@@ -1,17 +1,17 @@
 env = Environment()
 
 env['pykrita_dir'] = '/home/cesar/.local/share/krita/pykrita'
-env['kritagit_dir'] = env['pykrita_dir']+'/kritagit'
+env['version_manager_dir'] = env['pykrita_dir']+'/version_manager'
 
 for script in Split("""
-kritagit/__init__.py
-kritagit/repo.py
-kritagit/kritagit.py
+__init__.py
+common.py
+version_manager.py
 """):
-    env.Install(env['kritagit_dir'], script)
+    env.Install(env['version_manager_dir'], f'version_manager/{script}')
 
-env.Install(env['pykrita_dir'], 'kritagit.desktop')
-env.Install(env['pykrita_dir'], 'kritagit_reload.py')
+env.Install(env['pykrita_dir'], 'version_manager.desktop')
+env.Install(env['pykrita_dir'], 'version_manager_reload.py')
 
 # default build target
 env.Default(env['pykrita_dir'])
