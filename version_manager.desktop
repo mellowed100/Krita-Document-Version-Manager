@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=version_manager
+X-Python-2-Compatible=false
+X-Krita-Manual=version_manager_manual.html
+Name=Document Version Manager
+Comment=Version manager for Krita documents
+
