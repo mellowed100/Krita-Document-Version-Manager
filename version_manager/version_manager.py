@@ -144,6 +144,8 @@ class KritaVersionHistory(object):
 
         with FileLock(lock_filename, timeout=5):
             self.read_history()
+
+            # create copy of document dictionary template
             self.history[modtime] = KritaVersionHistory.document_dict.copy()
 
             for key, value in (('modtime', modtime),
@@ -152,13 +154,6 @@ class KritaVersionHistory(object):
                                ('message', repr(msg)),
                                ('author', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
                 self.history[modtime][key] = value
-            # doc_data = self.history[modtime]
-            # doc_data['modtime'] = modtime
-            # doc_data['filename'] = self.krita_basename
-            # doc_data['dirname'] = dirname
-            # doc_data['message'] = repr(msg)
-            # doc_data['author'] = getpwuid(
-            #     os.stat(self.krita_filename).st_uid).pw_name
 
             os.makedirs(doc_dir)
 
