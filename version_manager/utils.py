@@ -7,8 +7,8 @@ import os
 import shutil
 import json
 import time
-from filelock import FileLock
 from pwd import getpwuid
+from . import portalocker
 from . import common
 
 
@@ -150,7 +150,12 @@ class Utils(object):
         lock_filename = os.path.join(
             self.data_dir, f'.{self.history_basename}.lock')
 
-        with FileLock(lock_filename, timeout=5):
+        # with FileLock(lock_filename, timeout=5):
+        with open(lock_filename, 'r') as lockfile:
+
+            # use lockfile as a proxy for history.json
+            portalocker.lock(lockfile, portalocker.LOCK_EX)
+
             self.read_history()
 
             # create copy of document dictionary template
@@ -169,3 +174,5 @@ class Utils(object):
                 doc_dir, self.krita_basename))
 
             self.write_history()
+
+            portalocker.unlock(lockfile)
