@@ -56,13 +56,17 @@ class VersionManagerGui(DockWidget):
         reload_button.clicked.connect(self.reload_modules)
         layout.addWidget(reload_button)
 
+        self.textbox = QtWidgets.QTextEdit()
+        self.textbox.setReadOnly(True)
+        layout.addWidget(self.textbox)
+
         self.setWidget(widget)
 
     def doit(self, s):
         print(s)
         from importlib import reload
         reload(VM)
-        vm = VM.VersionManager()
+        vm = VM.VersionManager(self.textbox)
         vm.doit()
 
     def reload_modules(self):

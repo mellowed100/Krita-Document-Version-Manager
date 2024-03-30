@@ -10,8 +10,17 @@ import os
 import datetime
 import platform
 
+use_gui = False
+
+try:
+    import krita
+    from PyQt5 import QtWidgets
+    use_gui = True
+except:
+    pass
+
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('KVH')
+logger = logging.getLogger('Krita Version Manager')
 
 verbose_4 = 6  # max verbose
 verbose_3 = 7

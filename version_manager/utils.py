@@ -4,12 +4,19 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
+import errno
 import shutil
 import json
 import time
 from pwd import getpwuid
-from . import portalocker
-from . import common
+
+try:
+    import krita
+    from . import portalocker
+    from . import common
+except ImportError:
+    import portalocker
+    import common
 
 
 def doit():
@@ -24,18 +31,21 @@ class Utils(object):
                          'modtime': 0., 'dirname': '', 'message': '',
                          'owner': ''}
 
-    def __init__(self, filename):
+    def __init__(self, filename, text_box=None):
         """
 
         Arguments:
         filename (str) - Krita document .kra to manage
         """
+        if text_box:
+            common.status_bar = text_box
 
         self._krita_file = filename
 
         # check source krita document
         if not os.path.exists(self.krita_filename):
-            common.error(f'File not found: {self.krita_filename}')
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), self.krita_filename)
 
         # get absolute path to krita document
         self._krita_file = os.path.abspath(self.krita_filename)
@@ -82,15 +92,19 @@ class Utils(object):
         """Dictionary holding history data"""
         return self._history
 
+    def data_dir_exists():
+        """Returns True if data_dir exists"""
+        return os.path.exists(self.data_dir)
+
     def init(self, force=False):
         """Create and initialize data directory"""
 
-        if os.path.exists(self.data_dir) and force:
-            shutil.rmtree(self.data_dir)
-
-        if os.path.exists(self.data_dir):
-            common.error(
-                f'Cannot initialize data directory. Directory already exists: {self.data_dir}')
+        if self.data_dir_exists():
+            if force:
+                shutil.rmtree(self.data_dir)
+            else:
+                common.error(
+                    f'Cannot initialize data directory. Directory already exists: {self.data_dir}')
 
         os.makedirs(self.data_dir)
 
@@ -138,6 +152,8 @@ class Utils(object):
         # name of directory to hold checkpoint data
         doc_dir = os.path.join(self.data_dir, dirname)
 
+        self.read_history()
+
         # quit if an entry for this timestamp already exists
         if dirname in self.history:
             common.error(
@@ -160,7 +176,7 @@ class Utils(object):
             # use lockfile as a proxy for history.json
             portalocker.lock(lockfile, portalocker.LOCK_EX)
 
-            self.read_history()
+            # self.read_history()
 
             # create copy of document dictionary template
             self.history[modtime] = Utils.document_template.copy()

@@ -7,6 +7,7 @@ file = open('file.lock', 'w')
 
 print('locking file')
 portalocker.lock(file, portalocker.LOCK_EX)
+print('file locked')
 
 print('sleeping')
 time.sleep(5)
