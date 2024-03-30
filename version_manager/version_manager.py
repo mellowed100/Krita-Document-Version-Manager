@@ -1,14 +1,14 @@
-from krita import DockWidget
-from PyQt5.QtWidgets import QFileDialog
+import krita
+from PyQt5 import QtWidgets
 
-from .utils import Utils
+import version_manager.utils as utils
 
 
-class VersionManagerDocker(DockWidget):
+def doit():
+    print('VersionManager 222222')
+
+
+class VersionManager(object):
 
     def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Document Version Manager")
-
-    def canvasChanged(self, canvas):
         pass

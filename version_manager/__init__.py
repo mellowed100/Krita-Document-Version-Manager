@@ -1,11 +1,11 @@
 from krita import (DockWidgetFactory,
                    DockWidgetFactoryBase)
-from .version_manager import VersionManagerDocker
 
+from .version_manager_gui import VersionManagerGui
 
 doc_widget_factory = DockWidgetFactory(
     "document_version_manager",
     DockWidgetFactoryBase.DockRight,
-    VersionManagerDocker)
+    VersionManagerGui)
 
 Krita.instance().addDockWidgetFactory(doc_widget_factory)

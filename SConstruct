@@ -8,6 +8,7 @@ __init__.py
 common.py
 utils.py
 version_manager.py
+version_manager_gui.py
 portalocker.py
 """):
     env.Install(env['version_manager_dir'], f'version_manager/{script}')

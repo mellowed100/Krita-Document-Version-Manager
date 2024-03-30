@@ -12,6 +12,10 @@ from . import portalocker
 from . import common
 
 
+def doit():
+    print('Utils - 222222')
+
+
 class Utils(object):
     """Manages lower level operations for Krita document version manager"""
 
