@@ -155,7 +155,7 @@ class Utils(object):
             self.data_dir, f'.{self.history_basename}.lock')
 
         # with FileLock(lock_filename, timeout=5):
-        with open(lock_filename, 'r') as lockfile:
+        with open(lock_filename, 'w') as lockfile:
 
             # use lockfile as a proxy for history.json
             portalocker.lock(lockfile, portalocker.LOCK_EX)

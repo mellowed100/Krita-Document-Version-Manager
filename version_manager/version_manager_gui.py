@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets
 
 from .utils import Utils
 import version_manager.utils as utils
+import version_manager.version_manager as VM
 
 
 '''
@@ -48,7 +49,7 @@ class VersionManagerGui(DockWidget):
         widget.setLayout(layout)
 
         doit_button = QtWidgets.QPushButton(text='doit')
-        doit_button.clicked.connect(self.foo)
+        doit_button.clicked.connect(self.doit)
         layout.addWidget(doit_button)
 
         reload_button = QtWidgets.QPushButton(text='reload modules')
@@ -57,8 +58,12 @@ class VersionManagerGui(DockWidget):
 
         self.setWidget(widget)
 
-    def foo(self, s):
+    def doit(self, s):
         print(s)
+        from importlib import reload
+        reload(VM)
+        vm = VM.VersionManager()
+        vm.doit()
 
     def reload_modules(self):
         from importlib import reload
