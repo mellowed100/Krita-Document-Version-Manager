@@ -92,7 +92,7 @@ class Utils(object):
         """Dictionary holding history data"""
         return self._history
 
-    def data_dir_exists():
+    def data_dir_exists(self):
         """Returns True if data_dir exists"""
         return os.path.exists(self.data_dir)
 
