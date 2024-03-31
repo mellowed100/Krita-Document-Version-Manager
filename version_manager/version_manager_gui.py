@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets
 from .utils import Utils
 import version_manager.utils as utils
 import version_manager.version_manager as VM
-
+import version_manager.main_window_ui
 
 '''
 from importlib import reload
@@ -38,7 +38,7 @@ version_manager.utils.doit()
 '''
 
 
-class VersionManagerGui(DockWidget):
+class VersionManagerGui(DockWidget, main_window_ui):
 
     def __init__(self):
         super().__init__()
