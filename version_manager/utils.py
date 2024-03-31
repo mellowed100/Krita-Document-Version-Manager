@@ -178,15 +178,16 @@ class Utils(object):
 
             # self.read_history()
 
+            doc_id = str(modtime)
             # create copy of document dictionary template
-            self.history[modtime] = Utils.document_template.copy()
+            self.history[doc_id] = Utils.document_template.copy()
 
             for key, value in (('modtime', modtime),
                                ('filename', self.krita_basename),
                                ('dirname', dirname),
                                ('message', repr(msg)),
                                ('author', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
-                self.history[modtime][key] = value
+                self.history[doc_id][key] = value
 
             os.makedirs(doc_dir)
 
