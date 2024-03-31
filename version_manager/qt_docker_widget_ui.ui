@@ -70,7 +70,11 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="checkpoint_msg"/>
+          <widget class="QLineEdit" name="checkpoint_msg">
+           <property name="text">
+            <string>auto commit</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -106,16 +110,29 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>282</width>
+             <width>134</width>
              <height>20</height>
             </size>
            </property>
           </spacer>
          </item>
          <item>
+          <widget class="QCheckBox" name="generate_thumbnail">
+           <property name="text">
+            <string>generate thumbnail</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="autosave">
            <property name="text">
             <string>auto save</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -130,6 +147,25 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="progress_bar">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
     </widget>
    </item>
    <item>

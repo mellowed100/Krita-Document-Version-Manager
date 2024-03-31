@@ -1,18 +1,20 @@
 import version_manager.utils as utils
 import version_manager.common as common
 from pprint import pprint
+from PyQt5 import QtCore
 
 
 def doit():
     print('VersionManager 333333')
 
 
-class VersionManager(object):
+class VersionManager(QtCore.QObject):
 
-    def __init__(self, text_box=None):
-        pass
-        self._text_box = text_box
-        common.status_bar = self._text_box
+    progress_update = QtCore.pyqtSignal(int)
+    info_update = QtCore.pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
 
     def doit(self):
         self.add_checkpoint()
@@ -24,9 +26,6 @@ class VersionManager(object):
             msg (str) - checkpoint message
             autosave (bool) - Save the file first before creating checkpoint
         """
-        print('11111')
-        print(autosave)
-        print(msg)
 
         doc = Krita.instance().activeDocument()
 
@@ -38,19 +37,21 @@ class VersionManager(object):
 
         if doc.modified():
             if autosave:
-                pass
-                common.info('Saving document to {}'.format(doc.fileName()))
+                self.info_update.emit(
+                    'Auto-Save enabled. Saving document to {}'.format(doc.fileName()))
                 doc.save()
             else:
                 common.message_box(
                     "Document is modified.\nPlease save the current document before creating a checkpoint")
                 return
 
-        vmutils = utils.Utils(doc.fileName(), text_box=self._text_box)
+        vmutils = utils.Utils(doc.fileName())
 
         # create data directory if this is the first check-point
         if not vmutils.data_dir_exists():
-            common.info(f'Initializing data directory {vmutils.data_dir}')
+            # common.info(f'Initializing data directory {vmutils.data_dir}')
+            self.info_update.emit(
+                f'Initializing data directory {vmutils.data_dir}')
             vmutils.init()
 
         vmutils.add_checkpoint(msg)

@@ -4,41 +4,51 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
+import platform
 import errno
 import shutil
-import json
 import time
+import json
+import krita
 from pwd import getpwuid
-
-try:
-    import krita
-    from . import portalocker
-    from . import common
-except ImportError:
-    import portalocker
-    import common
+from PyQt5 import QtCore
+from . import portalocker
 
 
 def doit():
     print('Utils - 222222')
 
 
-class Utils(object):
+def creation_date(path_to_file):
+    """
+    From https://stackoverflow.com/questions/237079/how-do-i-get-file-creation-and-modification-date-times
+    """
+    if platform.system() == 'Windows':
+        return os.path.getctime(path_to_file)
+    else:
+        stat = os.stat(path_to_file)
+        try:
+            return stat.st_birthtime
+        except AttributeError:
+            # We're probably on Linux. No easy way to get creation dates here,
+            # so we'll settle for when its content was last modified.
+            return stat.st_mtime
+
+
+class Utils(QtCore.QObject):
     """Manages lower level operations for Krita document version manager"""
 
     history_template = {}
     document_template = {'filename': '', 'thumbnail': '',
-                         'modtime': 0., 'dirname': '', 'message': '',
-                         'owner': ''}
+                         'mtime': 0., 'dirname': '', 'message': '',
+                         'owner': '', 'date': ''}
 
-    def __init__(self, filename, text_box=None):
+    def __init__(self, filename):
         """
 
         Arguments:
         filename (str) - Krita document .kra to manage
         """
-        if text_box:
-            common.status_bar = text_box
 
         self._krita_file = filename
 
@@ -97,13 +107,17 @@ class Utils(object):
         return os.path.exists(self.data_dir)
 
     def init(self, force=False):
-        """Create and initialize data directory"""
+        """Create and initialize data directory
+
+
+        Raises FileExistsError if the data directory exists already
+        """
 
         if self.data_dir_exists():
             if force:
                 shutil.rmtree(self.data_dir)
             else:
-                common.error(
+                raise FileExistsError(
                     f'Cannot initialize data directory. Directory already exists: {self.data_dir}')
 
         os.makedirs(self.data_dir)
@@ -122,9 +136,7 @@ class Utils(object):
         """Loads document history from disk"""
 
         if not os.path.exists(self.history_filename):
-            common.error(f'File not found: {self.history_filename}')
-            self._history = None
-            return
+            raise FileNotFoundError(f'File not found: {self.history_filename}')
 
         with open(self.history_filename, 'r') as file_in:
             self._history = json.load(file_in)
@@ -142,12 +154,14 @@ class Utils(object):
 
         # check that krita file exists
         if not os.path.exists(self.krita_filename):
-            common.error(f'File not found: {self.krita_filename}')
-            return
+            raise FileNotFoundError(f'File not found: {self.krita_filename}')
 
         # get modification time of krita file
-        modtime = common.creation_date(self.krita_filename)
+        modtime = creation_date(self.krita_filename)
         dirname = 'doc_{}'.format(str(modtime).replace('.', '_'))
+
+        date = time.strftime('%a, %B %e, %Y - %I:%M %p',
+                             time.localtime(modtime))
 
         # name of directory to hold checkpoint data
         doc_dir = os.path.join(self.data_dir, dirname)
@@ -156,15 +170,13 @@ class Utils(object):
 
         # quit if an entry for this timestamp already exists
         if dirname in self.history:
-            common.error(
+            raise Exception(
                 'Timestamp for this version of the krita file already exists')
-            return
 
         # quit if a document directory for this timestamp already exists
         if os.path.exists(doc_dir):
-            common.error(
-                f'Document directory already exists: {doc_dir}')
-            return
+            raise FileExistsError(
+                f'No modifications to save. A checkpoint for this timestamp already exists. {date}')
 
         # lock history json file
         lock_filename = os.path.join(
@@ -182,11 +194,12 @@ class Utils(object):
             # create copy of document dictionary template
             self.history[doc_id] = Utils.document_template.copy()
 
-            for key, value in (('modtime', modtime),
+            for key, value in (('mtime', modtime),
                                ('filename', self.krita_basename),
                                ('dirname', dirname),
                                ('message', repr(msg)),
-                               ('author', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
+                               ('date', date),
+                               ('owner', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
                 self.history[doc_id][key] = value
 
             os.makedirs(doc_dir)

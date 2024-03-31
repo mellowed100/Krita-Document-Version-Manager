@@ -35,9 +35,19 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
     def add_checkpoint(self, s):
         from importlib import reload
         reload(VM)
-        vm = VM.VersionManager(self.textbox)
-        vm.add_checkpoint(msg=self.checkpoint_msg.text(),
-                          autosave=self.autosave.checkState() == 2)
+        # vm = VM.VersionManager(self.textbox)
+        vm = VM.VersionManager()
+        vm.info_update.connect(self.info_update)
+
+        try:
+            vm.add_checkpoint(msg=self.checkpoint_msg.text(),
+                              autosave=self.autosave.checkState() == 2)
+        except Exception as e:
+            self.info_update(str(e))
+            self.message_box(str(e), 'Error - Operation Failed')
+
+    def info_update(self, msg):
+        self.textbox.append(msg)
 
     def reload_modules(self):
         from importlib import reload
@@ -49,3 +59,15 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         import version_manager.version_manager
         reload(version_manager.version_manager)
         version_manager.version_manager.doit()
+
+    def message_box(self, msg, title=None):
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setIcon(QtWidgets.QMessageBox.Information)
+        msgBox.setIcon(QtWidgets.QMessageBox.Warning)
+        msgBox.setText(msg)
+
+        if title:
+            msgBox.setWindowTitle(str(title))
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msgBox.exec()

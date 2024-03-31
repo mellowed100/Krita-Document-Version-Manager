@@ -163,12 +163,10 @@ def creation_date(path_to_file):
     else:
         stat = os.stat(path_to_file)
         try:
-            print('bbbb')
             return stat.st_birthtime
         except AttributeError:
             # We're probably on Linux. No easy way to get creation dates here,
             # so we'll settle for when its content was last modified.
-            print('aaaaa')
             return stat.st_mtime
 
 
