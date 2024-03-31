@@ -170,3 +170,16 @@ def creation_date(path_to_file):
             # so we'll settle for when its content was last modified.
             print('aaaaa')
             return stat.st_mtime
+
+
+def message_box(msg, title=None):
+
+    msgBox = QtWidgets.QMessageBox()
+    msgBox.setIcon(QtWidgets.QMessageBox.Information)
+    msgBox.setIcon(QtWidgets.QMessageBox.Warning)
+    msgBox.setText(msg)
+
+    if title:
+        msgBox.setWindowTitle(str(title))
+    msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+    msgBox.exec()
