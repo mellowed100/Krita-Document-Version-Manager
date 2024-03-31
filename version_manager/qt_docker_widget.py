@@ -30,14 +30,14 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.setupUi(self)
 
         self.reload_modules_widget.clicked.connect(self.reload_modules)
-        self.doit_widget.clicked.connect(self.doit)
+        self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
 
-    def doit(self, s):
-        print(s)
+    def add_checkpoint(self, s):
         from importlib import reload
         reload(VM)
         vm = VM.VersionManager(self.textbox)
-        vm.doit()
+        vm.add_checkpoint(msg=self.checkpoint_msg.text(),
+                          autosave=self.autosave.checkState() == 2)
 
     def reload_modules(self):
         from importlib import reload
