@@ -9,7 +9,6 @@ import errno
 import shutil
 import time
 import json
-import krita
 from pwd import getpwuid
 from PyQt5 import QtCore
 from . import portalocker
@@ -71,6 +70,9 @@ class Utils(QtCore.QObject):
 
         # dictionary holding data for all document versions
         self._history = None
+
+        # lockfile used when writing history json file
+        self._lockfile = None
 
     @property
     def krita_filename(self):
@@ -141,6 +143,23 @@ class Utils(QtCore.QObject):
         with open(self.history_filename, 'r') as file_in:
             self._history = json.load(file_in)
 
+    def lock_history(self):
+        """Locks history json file"""
+
+        lock_filename = os.path.join(
+            self.data_dir, f'.{self.history_basename}.lock')
+
+        self._lockfile = open(lock_filename, 'w')
+
+        # use lockfile as a proxy for history.json
+        portalocker.lock(self._lockfile, portalocker.LOCK_EX)
+
+    def unlock_history(self):
+        """Unlock history json file"""
+        portalocker.unlock(self._lockfile)
+        self._lockfile.close()
+        self._lockfile = None
+
     def add_checkpoint(self, msg=''):
         """Adds a new checkpoint for the krita document.
 
@@ -166,47 +185,42 @@ class Utils(QtCore.QObject):
         # name of directory to hold checkpoint data
         doc_dir = os.path.join(self.data_dir, dirname)
 
+        self.lock_history()
+
         self.read_history()
 
         # quit if an entry for this timestamp already exists
         if dirname in self.history:
+            self.unlock_history()
             raise Exception(
                 'Timestamp for this version of the krita file already exists')
 
         # quit if a document directory for this timestamp already exists
         if os.path.exists(doc_dir):
+            self.unlock_history()
             raise FileExistsError(
                 f'No modifications to save. A checkpoint for this timestamp already exists. {date}')
 
-        # lock history json file
-        lock_filename = os.path.join(
-            self.data_dir, f'.{self.history_basename}.lock')
+        doc_id = str(modtime)
 
-        # with FileLock(lock_filename, timeout=5):
-        with open(lock_filename, 'w') as lockfile:
+        # create copy of document dictionary template
+        self.history[doc_id] = Utils.document_template.copy()
 
-            # use lockfile as a proxy for history.json
-            portalocker.lock(lockfile, portalocker.LOCK_EX)
+        for key, value in (('mtime', modtime),
+                           ('filename', self.krita_basename),
+                           ('dirname', dirname),
+                           ('message', repr(msg)),
+                           ('date', date),
+                           ('owner', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
+            self.history[doc_id][key] = value
 
-            # self.read_history()
+        os.makedirs(doc_dir)
 
-            doc_id = str(modtime)
-            # create copy of document dictionary template
-            self.history[doc_id] = Utils.document_template.copy()
+        shutil.copyfile(self.krita_filename, os.path.join(
+            doc_dir, self.krita_basename))
 
-            for key, value in (('mtime', modtime),
-                               ('filename', self.krita_basename),
-                               ('dirname', dirname),
-                               ('message', repr(msg)),
-                               ('date', date),
-                               ('owner', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
-                self.history[doc_id][key] = value
+        self.write_history()
 
-            os.makedirs(doc_dir)
+        self.unlock_history()
 
-            shutil.copyfile(self.krita_filename, os.path.join(
-                doc_dir, self.krita_basename))
-
-            self.write_history()
-
-            portalocker.unlock(lockfile)
+        return doc_id, self.history[doc_id]
