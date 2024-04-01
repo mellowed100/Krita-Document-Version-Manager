@@ -6,7 +6,8 @@ from PyQt5 import QtWidgets
 from .utils import Utils
 import version_manager.utils as utils
 import version_manager.version_manager as VM
-# import version_manager.main_window_ui
+
+import time
 
 
 class QtDocker(DockWidget):
@@ -41,13 +42,17 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
         try:
             vm.add_checkpoint(msg=self.checkpoint_msg.text(),
-                              autosave=self.autosave.checkState() == 2)
+                              autosave=self.autosave.checkState() == 2,
+                              generate_thumbnail=self.generate_thumbnail.checkState() == 2
+                              )
+            self.info_update('Add Checkpoint successfully completed.')
         except Exception as e:
             self.info_update(str(e))
             self.message_box(str(e), 'Error - Operation Failed')
 
     def info_update(self, msg):
-        self.textbox.append(msg)
+        current_time = time.strftime('%H:%M:%S', time.localtime())
+        self.textbox.append(f'{current_time} {msg}')
 
     def reload_modules(self):
         from importlib import reload
