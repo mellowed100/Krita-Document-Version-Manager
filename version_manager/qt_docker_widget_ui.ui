@@ -169,6 +169,9 @@
     </widget>
    </item>
    <item>
+    <widget class="HistoryWidget" name="history_widget"/>
+   </item>
+   <item>
     <widget class="QPushButton" name="reload_modules_widget">
      <property name="text">
       <string>reload modules</string>
@@ -180,6 +183,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HistoryWidget</class>
+   <extends>QTableWidget</extends>
+   <header>.qt_history_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

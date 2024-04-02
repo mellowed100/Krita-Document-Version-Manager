@@ -108,6 +108,10 @@ class Utils(QtCore.QObject):
         """Returns True if data_dir exists"""
         return os.path.exists(self.data_dir)
 
+    def history_exists(self):
+        """Returns True if history file exists"""
+        return os.path.exists(self.history_filename)
+
     def init(self, force=False):
         """Create and initialize data directory
 

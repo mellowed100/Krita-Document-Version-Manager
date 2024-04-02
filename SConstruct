@@ -14,6 +14,7 @@ utils.py
 portalocker.py
 version_manager.py
 qt_docker_widget.py
+qt_history_widget.py
 """):
     env.Install(env['version_manager_dir'], f'version_manager/{script}')
 

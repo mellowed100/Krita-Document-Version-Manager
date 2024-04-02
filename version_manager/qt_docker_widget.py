@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets
 from .utils import Utils
 import version_manager.utils as utils
 import version_manager.version_manager as VM
+from . import qt_history_widget
 
 import time
 
@@ -18,10 +19,24 @@ class QtDocker(DockWidget):
 
         self.setWindowTitle('Document Version Manager')
 
-        self.setWidget(QtDockerWidget())
+        self._history = QtDockerWidget()
+
+        self.setWidget(self._history)
+
+        self.active_doc = None
+
+        Krita.notifier().imageCreated.connect(self.imageCreated)
+
+    def imageCreated(self, doc):
+        print('Image Created')
 
     def canvasChanged(self, canvas):
-        pass
+        doc = Krita.instance().activeDocument()
+
+        if not self.active_doc or self.active_doc.fileName() != doc.fileName():
+            self.active_doc = doc
+            self._history.info_update('Switching documents')
+            self._history.reload_history()
 
 
 class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
@@ -32,6 +47,12 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
         self.reload_modules_widget.clicked.connect(self.reload_modules)
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
+        self.history_widget.info_update.connect(self.info_update)
+        # self.history_widget.reload_history()
+
+    def reload_history(self):
+        doc = Krita.instance().activeDocument()
+        self.history_widget.reload_history(doc)
 
     def add_checkpoint(self, s):
         from importlib import reload
@@ -45,6 +66,9 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
                               autosave=self.autosave.checkState() == 2,
                               generate_thumbnail=self.generate_thumbnail.checkState() == 2
                               )
+
+            self.reload_history()
+
             self.info_update('Add Checkpoint successfully completed.')
         except Exception as e:
             self.info_update(str(e))
@@ -52,7 +76,7 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
     def info_update(self, msg):
         current_time = time.strftime('%H:%M:%S', time.localtime())
-        self.textbox.append(f'{current_time} {msg}')
+        self.textbox.append(f'{current_time}  {msg}')
 
     def reload_modules(self):
         from importlib import reload
@@ -64,6 +88,9 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         import version_manager.version_manager
         reload(version_manager.version_manager)
         version_manager.version_manager.doit()
+
+        import version_manager.qt_history_widget
+        reload(version_manager.qt_history_widget)
 
     def message_box(self, msg, title=None):
 
