@@ -33,9 +33,8 @@ class VersionManager(QtCore.QObject):
 
         # check for new document that hasn't been saved yet
         if doc.fileName() == "":
-            common.message_box(
+            raise FileNotFoundError(
                 "No filename found.\nPlease save the current document before creating a checkpoint")
-            return
 
         if doc.modified():
             if autosave:
