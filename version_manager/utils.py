@@ -14,10 +14,6 @@ from PyQt5 import QtCore
 from . import portalocker
 
 
-def doit():
-    print('Utils - 222222')
-
-
 def creation_date(path_to_file):
     """
     From https://stackoverflow.com/questions/237079/how-do-i-get-file-creation-and-modification-date-times
@@ -44,7 +40,6 @@ class Utils(QtCore.QObject):
 
     def __init__(self, filename):
         """
-
         Arguments:
         filename (str) - Krita document .kra to manage
         """
@@ -218,8 +213,10 @@ class Utils(QtCore.QObject):
                            ('owner', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
             self.history[doc_id][key] = value
 
+        # make document data directory
         os.makedirs(doc_dir)
 
+        # copy krita file to document data directory
         shutil.copyfile(self.krita_filename, os.path.join(
             doc_dir, self.krita_basename))
 

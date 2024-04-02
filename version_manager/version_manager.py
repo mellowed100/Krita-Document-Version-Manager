@@ -1,25 +1,17 @@
 import os
 import version_manager.utils as utils
-import version_manager.common as common
-from pprint import pprint
 from PyQt5 import QtCore
-from krita import *
-
-
-def doit():
-    print('VersionManager 333333')
+import krita
 
 
 class VersionManager(QtCore.QObject):
+    """Higher level, non-gui methods to manage document version history"""
 
-    progress_update = QtCore.pyqtSignal(int)
+    # signal to send text to debug console
     info_update = QtCore.pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
-
-    def doit(self):
-        self.add_checkpoint()
 
     def add_checkpoint(self, msg='', autosave=False, generate_thumbnail=True):
         """Adds document checkpoint to data directory
@@ -54,8 +46,8 @@ class VersionManager(QtCore.QObject):
                 f'Initializing data directory {vmutils.data_dir}')
             vmutils.init()
 
+        # Create new checkpoint
         doc_id, doc_data = vmutils.add_checkpoint(msg)
-        pprint(vmutils.history)
 
         if generate_thumbnail:
             filename = os.path.join(
@@ -87,6 +79,5 @@ class VersionManager(QtCore.QObject):
         scale_factor = target_dim/max_dim
         clone.scaleImage(int(width*scale_factor), int(height*scale_factor),
                          int(clone.xRes()*scale_factor), int(clone.yRes() * scale_factor), "box")
-        info = InfoObject()
 
-        clone.exportImage(filename, info)
+        clone.exportImage(filename, krita.InfoObject())

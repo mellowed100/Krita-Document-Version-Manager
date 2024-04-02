@@ -1,14 +1,14 @@
-from krita import DockWidget
-
-from version_manager import qt_docker_widget_ui
-from PyQt5 import QtWidgets
-
-from .utils import Utils
-import version_manager.utils as utils
-import version_manager.version_manager as VM
-from . import qt_history_widget
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import time
+from PyQt5 import QtWidgets
+from krita import DockWidget
+
+from . import qt_docker_widget_ui
+from . import version_manager
 
 
 class QtDocker(DockWidget):
@@ -55,14 +55,13 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.history_widget.reload_history(doc)
 
     def add_checkpoint(self, s):
-        from importlib import reload
-        reload(VM)
-        # vm = VM.VersionManager(self.textbox)
-        vm = VM.VersionManager()
+        """Create a new document checkpoint"""
+
+        vm = version_manager.VersionManager()
         vm.info_update.connect(self.info_update)
 
         try:
-            vm.add_checkpoint(msg=self.checkpoint_msg.text(),
+            vm.add_checkpoint(msg=self.checkpoint_msg.toPlainText(),
                               autosave=self.autosave.checkState() == 2,
                               generate_thumbnail=self.generate_thumbnail.checkState() == 2
                               )
@@ -76,18 +75,16 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
     def info_update(self, msg):
         current_time = time.strftime('%H:%M:%S', time.localtime())
-        self.textbox.append(f'{current_time}  {msg}')
+        self.debug_console.append(f'{current_time}  {msg}')
 
     def reload_modules(self):
         from importlib import reload
 
         import version_manager.utils
         reload(version_manager.utils)
-        version_manager.utils.doit()
 
         import version_manager.version_manager
         reload(version_manager.version_manager)
-        version_manager.version_manager.doit()
 
         import version_manager.qt_history_widget
         reload(version_manager.qt_history_widget)

@@ -46,7 +46,7 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
          <property name="spacing">
           <number>2</number>
          </property>
@@ -63,16 +63,29 @@
           <number>2</number>
          </property>
          <item>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="checkpoint_label">
            <property name="text">
-            <string>message:</string>
+            <string>Checkpoint Message</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="checkpoint_msg">
-           <property name="text">
-            <string>auto commit</string>
+          <widget class="QPlainTextEdit" name="checkpoint_msg">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="plainText">
+            <string>auto commit
+</string>
            </property>
           </widget>
          </item>
@@ -150,25 +163,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QProgressBar" name="progress_bar">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>10</height>
-      </size>
-     </property>
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="HistoryWidget" name="history_widget"/>
    </item>
    <item>
@@ -179,7 +173,14 @@
     </widget>
    </item>
    <item>
-    <widget class="QTextEdit" name="textbox"/>
+    <widget class="QTextEdit" name="debug_console">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>50</height>
+      </size>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
