@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
+import ast
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from . import utils
@@ -33,6 +34,10 @@ class HistoryModel(QtCore.QAbstractTableModel):
         # 2D array of data for model
         self._data = [[self._history[key][property] for property in (
             'thumbnail', 'dirname', 'date', 'message')] for key in reversed(sorted(self._history))]
+
+        # convert literal to original type
+        for row in self._data:
+            row[3] = ast.literal_eval(row[3])
 
         # Default thumbnail dimension
         self._default_dim = 240
@@ -111,6 +116,7 @@ class HistoryWidget(QtWidgets.QWidget):
         self.table.resizeColumnToContents(0)
         self.table.hideColumn(1)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        self.table.setAlternatingRowColors(True)
 
         layout.addWidget(self.table)
 
