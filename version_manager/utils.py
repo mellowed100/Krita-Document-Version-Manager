@@ -7,8 +7,8 @@ import os
 import platform
 import errno
 import shutil
-import time
 import json
+from datetime import datetime
 from pwd import getpwuid
 from PyQt5 import QtCore
 from . import portalocker
@@ -176,16 +176,17 @@ class Utils(QtCore.QObject):
 
         # get modification time of krita file
         modtime = creation_date(self.krita_filename)
-        dirname = 'doc_{}'.format(str(modtime).replace('.', '_'))
 
-        date = time.strftime('%a, %B %e, %Y - %I:%M %p',
-                             time.localtime(modtime))
+        # more human readable form for displaying in history widget.
+        date = datetime.fromtimestamp(modtime).strftime(
+            '%a, %B %e, %Y - %I:%M %p')
 
         # name of directory to hold checkpoint data
+        dirname = datetime.fromtimestamp(
+            modtime).strftime('doc__%Y_%m_%d__%H_%M_%S_%f')
         doc_dir = os.path.join(self.data_dir, dirname)
 
         self.lock_history()
-
         self.read_history()
 
         # quit if an entry for this timestamp already exists
@@ -221,7 +222,6 @@ class Utils(QtCore.QObject):
             doc_dir, self.krita_basename))
 
         self.write_history()
-
         self.unlock_history()
 
         return doc_id, self.history[doc_id]
