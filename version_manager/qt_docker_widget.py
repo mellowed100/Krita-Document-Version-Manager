@@ -28,7 +28,8 @@ class QtDocker(DockWidget):
         Krita.notifier().imageCreated.connect(self.imageCreated)
 
     def imageCreated(self, doc):
-        print('Image Created')
+        # print('Image Created')
+        pass
 
     def canvasChanged(self, canvas):
         doc = Krita.instance().activeDocument()
@@ -48,11 +49,11 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.reload_modules_widget.clicked.connect(self.reload_modules)
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
         self.history_widget.info_update.connect(self.info_update)
-        # self.history_widget.reload_history()
 
     def reload_history(self):
-        doc = Krita.instance().activeDocument()
-        self.history_widget.reload_history(doc)
+        """Reloads document history"""
+
+        self.history_widget.reload_history()
 
     def add_checkpoint(self, s):
         """Create a new document checkpoint"""
@@ -88,6 +89,7 @@ class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
         import version_manager.qt_history_widget
         reload(version_manager.qt_history_widget)
+        version_manager.qt_history_widget.doit()
 
     def message_box(self, msg, title=None):
 

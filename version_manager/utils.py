@@ -159,6 +159,22 @@ class Utils(QtCore.QObject):
         self._lockfile.close()
         self._lockfile = None
 
+    def update_checkpoint_message(self, doc_id, msg):
+        """Updates the check-in message for a document
+
+        Parameters:
+        doc_id (str): history dictionary key of the document to update
+        msg (str): new message to update document checkpoint with.
+        """
+
+        self.lock_history()
+        self.read_history()
+        if doc_id not in self.history:
+            raise IndexError(f'unknown document index {doc_id}')
+        self.history[doc_id]['message'] = repr(msg)
+        self.write_history()
+        self.unlock_history()
+
     def add_checkpoint(self, msg=''):
         """Adds a new checkpoint for the krita document.
 
