@@ -19,9 +19,9 @@ class QtDocker(DockWidget):
 
         self.setWindowTitle('Document Version Manager')
 
-        self._history = QtDockerWidget()
+        self._version_ui = VersionUI()
 
-        self.setWidget(self._history)
+        self.setWidget(self._version_ui)
 
         self.active_doc = None
 
@@ -36,14 +36,14 @@ class QtDocker(DockWidget):
 
         if not self.active_doc or self.active_doc.fileName() != doc.fileName():
             self.active_doc = doc
-            self._history.info_update('Switching documents')
-            self._history.reload_history()
+            self._version_ui.info_update('Switching documents')
+            self._version_ui.reload_history()
 
 
-class QtDockerWidget(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
+class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
     def __init__(self, parent=None):
-        super(QtDockerWidget, self).__init__(parent)
+        super(VersionUI, self).__init__(parent)
         self.setupUi(self)
 
         self.reload_modules_widget.clicked.connect(self.reload_modules)

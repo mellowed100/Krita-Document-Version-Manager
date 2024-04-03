@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import os
 import ast
+import shutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from . import utils
@@ -137,7 +138,8 @@ class HistoryWidget(QtWidgets.QWidget):
         self.table.resizeRowsToContents()
         self.table.resizeColumnToContents(1)  # thumbnail column
         self.table.hideColumn(0)  # key column
-        self.table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        # self.table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.context_menu)
@@ -158,7 +160,8 @@ class HistoryWidget(QtWidgets.QWidget):
             'Edit Checkpoint Message': 'edit_message',
             'Generate Thumbnail': 'generate_thumbnail',
             'Make Active': 'make_active',
-            'Delete Checkpoint': 'delete_checkpoint'}
+            'Delete Checkpoint': 'delete_checkpoint',
+            'Load Checkpoint': 'load_checkpoint'}
 
         for desc in self.context_menu_actions:
             self.context_menu.addAction(QtWidgets.QAction(desc, self))
@@ -173,6 +176,10 @@ class HistoryWidget(QtWidgets.QWidget):
 
         # get context menu selection
         result = self.context_menu.exec_(QtGui.QCursor.pos())
+
+        # nothing selected
+        if not result:
+            return
 
         # call menu item's method and pass document id
         getattr(self, self.context_menu_actions[result.text()])(doc_id)
@@ -221,8 +228,51 @@ class HistoryWidget(QtWidgets.QWidget):
         self.model.utils.update_checkpoint_message(doc_id, new_msg)
         self.reload_history()
 
-    def make_active(self, event):
-        print('in make active')
+    def load_checkpoint(self, doc_id):
+        """Loads a previous checkpoint into Krita
+
+        Parameters:
+        doc_id (str): document key to make active
+        """
+
+        current_doc = Krita.instance().activeDocument()
+
+        filename = os.path.join(self.model.utils.data_dir,
+                                self.model.history[doc_id]['dirname'],
+                                self.model.history[doc_id]['filename'])
+        if not os.path.exists(filename):
+            raise FileNotFoundError(filename)
+
+        new_doc = Krita.instance().openDocument(filename)
+        Krita.instance().activeWindow().addView(new_doc)
+        Krita.instance().setActiveDocument(new_doc)
+
+    def make_active(self, doc_id):
+        """Makes a previous checkpoint the active document
+
+        Parameters:
+        doc_id (str): document key to make active
+        """
+
+        current_doc = Krita.instance().activeDocument()
+
+        filename = os.path.join(self.model.utils.data_dir,
+                                self.model.history[doc_id]['dirname'],
+                                self.model.history[doc_id]['filename'])
+        if not os.path.exists(filename):
+            raise FileNotFoundError(filename)
+
+        self.info_update(
+            f'copying {filename} -> {self.model.utils.krita_filename}')
+        shutil.copyfile(filename, self.model.utils.krita_filename)
+
+        self.info_update('closing old document')
+        current_doc.close()
+
+        self.info_update('Opening new document')
+        new_doc = Krita.instance().openDocument(self.model.utils.krita_filename)
+        Krita.instance().activeWindow().addView(new_doc)
+        Krita.instance().setActiveDocument(new_doc)
 
     def generate_thumbnail(self, event):
         print('in generate thumbnail')
