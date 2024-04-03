@@ -58,7 +58,7 @@ class Utils(QtCore.QObject):
 
         # set path to document data directory
         self._version_directory = os.path.join(
-            krita_path, '.{}'.format(self.krita_basename))
+            krita_path, '{}.d'.format(self.krita_basename))
 
         self._data_basename = 'history.json'
         self._data_filename = os.path.join(self.data_dir, self._data_basename)
