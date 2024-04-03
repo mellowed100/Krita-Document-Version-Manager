@@ -9,6 +9,7 @@ import shutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from . import utils
+from . import version_manager
 from pprint import pprint
 
 
@@ -166,6 +167,21 @@ class HistoryWidget(QtWidgets.QWidget):
         for desc in self.context_menu_actions:
             self.context_menu.addAction(QtWidgets.QAction(desc, self))
 
+    def status_update(self, msg):
+        """Emits info_update signal with message send to text box
+
+        Parameters:
+        msg (str) - Message to send
+        """
+
+        """Emits info_update signal with message send to text box
+
+        Parameters:
+        msg (str) - Message to send
+        """
+
+        self.info_update.emit(msg)
+
     def context_menu(self, pos):
         """Display context menu in the history table"""
 
@@ -256,23 +272,33 @@ class HistoryWidget(QtWidgets.QWidget):
 
         current_doc = Krita.instance().activeDocument()
 
+        old_date = self.model.history[doc_id]['date']
+
         filename = os.path.join(self.model.utils.data_dir,
                                 self.model.history[doc_id]['dirname'],
                                 self.model.history[doc_id]['filename'])
         if not os.path.exists(filename):
             raise FileNotFoundError(filename)
 
-        self.info_update(
+        self.status_update(
             f'copying {filename} -> {self.model.utils.krita_filename}')
         shutil.copyfile(filename, self.model.utils.krita_filename)
 
-        self.info_update('closing old document')
+        self.status_update('closing old document')
         current_doc.close()
 
-        self.info_update('Opening new document')
+        self.status_update('Opening new document')
         new_doc = Krita.instance().openDocument(self.model.utils.krita_filename)
         Krita.instance().activeWindow().addView(new_doc)
         Krita.instance().setActiveDocument(new_doc)
+
+        vm = version_manager.VersionManager()
+        vm.info_update.connect(self.status_update)
+        vm.add_checkpoint(msg=f'Copied from version: {old_date}',
+                          autosave=True,
+                          generate_thumbnail=True)
+        self.reload_history()
+        self.status_update('Finished making active')
 
     def generate_thumbnail(self, event):
         print('in generate thumbnail')
@@ -302,7 +328,7 @@ class HistoryWidget(QtWidgets.QWidget):
         if doc.fileName() == "":
             return
 
-        self.info_update.emit('updating history widget')
+        self.status_update('updating history widget')
 
         vmutils = utils.Utils(doc.fileName())
 
