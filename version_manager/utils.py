@@ -146,7 +146,7 @@ class Utils(QtCore.QObject):
         """Locks history json file"""
 
         lock_filename = os.path.join(
-            self.data_dir, f'.{self.history_basename}.lock')
+            self.data_dir, f'{self.history_basename}.lock')
 
         self._lockfile = open(lock_filename, 'w')
 
