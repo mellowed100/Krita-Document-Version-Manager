@@ -123,6 +123,7 @@ class HistoryWidget(QtWidgets.QWidget):
 
     # Signal to send text to debug console
     info_update = QtCore.pyqtSignal(str)
+    error_update = QtCore.pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -166,6 +167,10 @@ class HistoryWidget(QtWidgets.QWidget):
 
         for desc in self.context_menu_actions:
             self.context_menu.addAction(QtWidgets.QAction(desc, self))
+
+    def report_error(self, msg, title):
+        """Emits error_update signal to open error dialog"""
+        self.error_update.emit(msg, title)
 
     def status_update(self, msg):
         """Emits info_update signal with message send to text box
@@ -340,7 +345,66 @@ class HistoryWidget(QtWidgets.QWidget):
         self.status_update('Finished generating thumbnail')
 
     def delete_checkpoint(self, doc_id):
-        pass
+        """Deletes a checkpoint from the filesystem and history.json
+
+        Parameters:
+        doc_id (str) - Document ID key to delete
+        """
+
+        date = self.model.history[doc_id]['date']
+
+        editor = QtWidgets.QDialog(self)
+
+        layout = QtWidgets.QVBoxLayout()
+        editor.setLayout(layout)
+
+        for text in ('Are you sure you want to delete checkpoint:',
+                     date,
+                     '(There is no undo)'):
+            label = QtWidgets.QLabel(text)
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label)
+
+        # create ok/cancel buttons
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok |
+                                             QtWidgets.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(editor.accept)
+        buttons.rejected.connect(editor.reject)
+
+        layout.addWidget(buttons)
+
+        # show window and get result
+        result = editor.exec()
+        if not result:
+            return
+
+        vmutils = utils.Utils(Krita.instance().activeDocument().fileName())
+        vmutils.read_history()
+
+        if doc_id not in vmutils.history:
+            raise IndexError(
+                'Cannot find document id: {doc_id} in history.json')
+
+        tgt_dir = os.path.join(vmutils.data_dir,
+                               vmutils.history[doc_id]['dirname'])
+
+        if not os.path.isdir(tgt_dir):
+            raise FileNotFoundError(f'Document directory not found: {tgt_dir}')
+
+        self.status_update(f'Removing document directory {tgt_dir}')
+        vmutils.lock_history()
+        vmutils.read_history()
+        try:
+            shutil.rmtree(tgt_dir)
+            del vmutils.history[doc_id]
+        except Exception as e:
+            vmutils.unlock_history()
+            self.report_error(str(e), 'Checkpoint delete failed')
+            return
+        vmutils.write_history()
+        vmutils.unlock_history()
+        self.reload_history()
+        self.status_update('Checkpoint removal complete')
 
     def set_default_icon_scale(self):
         self.slider_widget.setValue(64)
