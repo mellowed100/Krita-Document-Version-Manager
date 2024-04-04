@@ -49,6 +49,7 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.reload_modules_widget.clicked.connect(self.reload_modules)
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
         self.history_widget.info_update.connect(self.info_update)
+        self.history_widget.error_update.connect(self.report_error)
 
     def reload_history(self):
         """Reloads document history"""
@@ -71,8 +72,14 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
             self.info_update('Add Checkpoint successfully completed.')
         except Exception as e:
-            self.info_update(str(e))
-            self.message_box(str(e), 'Error - Operation Failed')
+            self.report_error(str(e), 'Error - Operation Failed')
+            return
+            # self.info_update(str(e))
+            # self.message_box(str(e), 'Error - Operation Failed')
+
+    def report_error(self, msg, title='Error - Operation Failed'):
+        self.info_update(str(msg))
+        self.message_box(str(msg), 'Error - Operation Failed')
 
     def info_update(self, msg):
         current_time = time.strftime('%H:%M:%S', time.localtime())
