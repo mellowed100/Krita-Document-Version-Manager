@@ -69,15 +69,23 @@ class VersionManager(QtCore.QObject):
 
     def generate_thumbnail(self, doc, filename):
         clone = doc.clone()
+        # Krita.instance().activeWindow().addView(clone)
         clone.setBatchmode(True)
         clone.flatten()
 
         target_dim = 240.0
         width = clone.width()
         height = clone.height()
+        self.info_update.emit(f'width={width} height={height}')
         max_dim = max(width, height)
         scale_factor = target_dim/max_dim
-        clone.scaleImage(int(width*scale_factor), int(height*scale_factor),
-                         int(clone.xRes()*scale_factor), int(clone.yRes() * scale_factor), "box")
-
+        self.info_update.emit(f'scale_factor={scale_factor}')
+        # clone.scaleImage(int(width*scale_factor), int(height*scale_factor),
+        #                  int(clone.xRes()*scale_factor), int(clone.yRes() * scale_factor), "box")
+        new_width = int(width*scale_factor)
+        new_height = int(height*scale_factor)
+        clone.scaleImage(new_width, new_height,
+                         clone.resolution(), clone.resolution(), "box")
+        self.info_update.emit(f'saving thumbnail to {filename}')
         clone.exportImage(filename, krita.InfoObject())
+        # clone.close()
