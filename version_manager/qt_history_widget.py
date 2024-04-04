@@ -300,8 +300,44 @@ class HistoryWidget(QtWidgets.QWidget):
         self.reload_history()
         self.status_update('Finished making active')
 
-    def generate_thumbnail(self, event):
-        print('in generate thumbnail')
+    def generate_thumbnail(self, doc_id):
+        """Generates new thumbnail image for given version.
+
+        Parameters:
+        doc_id (str) - Document ID for version to generate ID for.
+        """
+
+        thumbnail_src = os.path.join(self.model.utils.data_dir,
+                                     self.model.history[doc_id]['dirname'],
+                                     self.model.history[doc_id]['filename'])
+        if not os.path.exists(thumbnail_src):
+            raise FileNotFoundError(thumbnail_src)
+
+        thumbnail_tgt = os.path.join(self.model.utils.data_dir,
+                                     self.model.history[doc_id]['dirname'],
+                                     'thumbnail.png')
+
+        self.status_update(f'opening {thumbnail_src}')
+        doc = Krita.instance().openDocument(thumbnail_src)
+        # Krita.instance().activeWindow().addView(doc)
+        vm = version_manager.VersionManager()
+        vm.info_update.connect(self.status_update)
+
+        self.status_update(f'Generating thumbnail {thumbnail_tgt}')
+        vm.generate_thumbnail(doc, thumbnail_tgt)
+        doc.close()
+
+        # update path to thumbnail in history.json if needed
+        if self.model.history[doc_id]['thumbnail'] != 'thumbnail.png':
+            vmutils = utils.Utils(Krita.instance().activeDocument().fileName())
+            vmutils.lock_history()
+            vmutils.read_history()
+            vmutils.history[doc_id]['thumbnail'] = 'thumbnail.png'
+            vmutils.write_history()
+            vmutils.unlock_history()
+
+        self.reload_history()
+        self.status_update('Finished generating thumbnail')
 
     def delete_checkpoint(self, doc_id):
         pass
@@ -328,7 +364,7 @@ class HistoryWidget(QtWidgets.QWidget):
         if doc.fileName() == "":
             return
 
-        self.status_update('updating history widget')
+        self.status_update('reloading document history')
 
         vmutils = utils.Utils(doc.fileName())
 
