@@ -12,6 +12,7 @@ class VersionManager(QtCore.QObject):
 
     def __init__(self):
         super().__init__()
+        pass
 
     def add_checkpoint(self, msg='', autosave=False, generate_thumbnail=True):
         """Adds document checkpoint to data directory
@@ -41,7 +42,6 @@ class VersionManager(QtCore.QObject):
 
         # create data directory if this is the first check-point
         if not vmutils.data_dir_exists():
-            # common.info(f'Initializing data directory {vmutils.data_dir}')
             self.info_update.emit(
                 f'Initializing data directory {vmutils.data_dir}')
             vmutils.init()
@@ -69,7 +69,6 @@ class VersionManager(QtCore.QObject):
 
     def generate_thumbnail(self, doc, filename):
         clone = doc.clone()
-        # Krita.instance().activeWindow().addView(clone)
         clone.setBatchmode(True)
         clone.flatten()
 
@@ -78,12 +77,10 @@ class VersionManager(QtCore.QObject):
         height = clone.height()
         max_dim = max(width, height)
         scale_factor = target_dim/max_dim
-        # clone.scaleImage(int(width*scale_factor), int(height*scale_factor),
-        #                  int(clone.xRes()*scale_factor), int(clone.yRes() * scale_factor), "box")
         new_width = int(width*scale_factor)
         new_height = int(height*scale_factor)
         clone.scaleImage(new_width, new_height,
                          clone.resolution(), clone.resolution(), "box")
         self.info_update.emit(f'saving thumbnail to {filename}')
         clone.exportImage(filename, krita.InfoObject())
-        # clone.close()
+        clone.close()

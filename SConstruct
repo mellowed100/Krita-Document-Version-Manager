@@ -1,15 +1,12 @@
+import os
+from pathlib import Path
 env = Environment()
 
-env['pykrita_dir'] = '/home/cesar/.local/share/krita/pykrita'
+env['pykrita_dir'] = os.path.join(Path.home(), '.local/share/krita/pykrita')
 env['version_manager_dir'] = env['pykrita_dir']+'/version_manager'
 
-'''
-version_manager_gui.py
-qt_docker.py
-'''
 for script in Split("""
 __init__.py
-common.py
 utils.py
 portalocker.py
 version_manager.py
@@ -19,11 +16,9 @@ qt_history_widget.py
     env.Install(env['version_manager_dir'], f'version_manager/{script}')
 
 env.Install(env['pykrita_dir'], 'version_manager.desktop')
-env.Install(env['pykrita_dir'], 'version_manager_reload.py')
 
 # default build target
 env.Default(env['pykrita_dir'])
-
 
 ##############################
 # compile .ui into .py

@@ -25,13 +25,9 @@ class QtDocker(DockWidget):
 
         self.active_doc = None
 
-        Krita.notifier().imageCreated.connect(self.imageCreated)
-
-    def imageCreated(self, doc):
-        # print('Image Created')
-        pass
-
     def canvasChanged(self, canvas):
+        """Reload the version manager if the active document changes"""
+
         doc = Krita.instance().activeDocument()
 
         if not self.active_doc or self.active_doc.fileName() != doc.fileName():
@@ -41,12 +37,12 @@ class QtDocker(DockWidget):
 
 
 class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
+    """Widget containing document version history and new checkpoint widgets"""
 
     def __init__(self, parent=None):
         super(VersionUI, self).__init__(parent)
         self.setupUi(self)
 
-        self.reload_modules_widget.clicked.connect(self.reload_modules)
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
         self.history_widget.info_update.connect(self.info_update)
         self.history_widget.error_update.connect(self.report_error)
@@ -74,8 +70,6 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         except Exception as e:
             self.report_error(str(e), 'Error - Operation Failed')
             return
-            # self.info_update(str(e))
-            # self.message_box(str(e), 'Error - Operation Failed')
 
     def report_error(self, msg, title='Error - Operation Failed'):
         self.info_update(str(msg))
@@ -84,19 +78,6 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
     def info_update(self, msg):
         current_time = time.strftime('%H:%M:%S', time.localtime())
         self.debug_console.append(f'{current_time}  {msg}')
-
-    def reload_modules(self):
-        from importlib import reload
-
-        import version_manager.utils
-        reload(version_manager.utils)
-
-        import version_manager.version_manager
-        reload(version_manager.version_manager)
-
-        import version_manager.qt_history_widget
-        reload(version_manager.qt_history_widget)
-        version_manager.qt_history_widget.doit()
 
     def message_box(self, msg, title=None):
 
