@@ -93,6 +93,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="add_checkpoint_btn">
+        <property name="text">
+         <string>add checkpoint</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QFrame" name="frame_2">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -149,13 +156,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QPushButton" name="add_checkpoint_btn">
-           <property name="text">
-            <string>add checkpoint</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
@@ -166,18 +166,11 @@
     <widget class="HistoryWidget" name="history_widget"/>
    </item>
    <item>
-    <widget class="QPushButton" name="reload_modules_widget">
-     <property name="text">
-      <string>reload modules</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QTextEdit" name="debug_console">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>50</height>
+       <height>100</height>
       </size>
      </property>
     </widget>
