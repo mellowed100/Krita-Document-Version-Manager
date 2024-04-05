@@ -10,16 +10,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from . import utils
 from . import version_manager
-from pprint import pprint
-
-
-def doit():
-    print('ttttttt')
 
 
 class HistoryModel(QtCore.QAbstractTableModel):
     def __init__(self, utils):
-        """Table model dor displaying document history.
+        """Table model for displaying document history.
 
 
         column 0 = key (hidden)
@@ -140,12 +135,10 @@ class HistoryWidget(QtWidgets.QWidget):
         self.table.resizeRowsToContents()
         self.table.resizeColumnToContents(1)  # thumbnail column
         self.table.hideColumn(0)  # key column
-        # self.table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.context_menu)
-        # self.table = HistoryTable(self)
 
         layout.addWidget(self.table)
 
@@ -174,12 +167,6 @@ class HistoryWidget(QtWidgets.QWidget):
         self.error_update.emit(msg, title)
 
     def status_update(self, msg):
-        """Emits info_update signal with message send to text box
-
-        Parameters:
-        msg (str) - Message to send
-        """
-
         """Emits info_update signal with message send to text box
 
         Parameters:
@@ -275,6 +262,9 @@ class HistoryWidget(QtWidgets.QWidget):
         Parameters:
         doc_id (str): document key to make active
         """
+
+        if not self.check_operation_readiness():
+            return
 
         current_doc = Krita.instance().activeDocument()
 
@@ -407,11 +397,15 @@ class HistoryWidget(QtWidgets.QWidget):
         self.reload_history()
         self.status_update('Checkpoint removal complete')
 
-    def import_krita(self, doc_id):
-        """Imports a krita .kra into the history
+    def check_operation_readiness(self):
+        """Check that current document can be safely overriden.
 
-        Parameters:
-        doc_id (str) - unused
+        Checks that current document doesn't have any usaved modifications.
+        checks that current document krita file has a checkpoint.
+
+        Returns
+        True if all checks pass
+        None if any check fails
         """
         current_doc = Krita.instance().activeDocument()
 
@@ -423,7 +417,7 @@ class HistoryWidget(QtWidgets.QWidget):
 
             for text in ('The current document has been modified.',
                          'Please save and create a checkpoint',
-                         'before importing a krita file,'):
+                         'before continuing the operation,'):
                 label = QtWidgets.QLabel(text)
                 label.setAlignment(Qt.AlignCenter)
                 layout.addWidget(label)
@@ -437,9 +431,9 @@ class HistoryWidget(QtWidgets.QWidget):
 
             # show window and get result
             result = editor.exec()
-            return
+            return None
 
-        # check if the current document has been checked into the history
+        # check if the current document has been checked into the version manager
         current_doc_id = str(utils.creation_date(current_doc.fileName()))
 
         if current_doc_id not in self.model.history:
@@ -449,8 +443,8 @@ class HistoryWidget(QtWidgets.QWidget):
             editor.setLayout(layout)
 
             for text in ('The current document currently does not have a checkpoint.',
-                         'Click on OK to continue importing,'
-                         'which will overwrite the current document.'):
+                         'Click on OK to continue the operation'
+                         'or Cancel to abort the operation.'):
                 label = QtWidgets.QLabel(text)
                 label.setAlignment(Qt.AlignCenter)
                 layout.addWidget(label)
@@ -467,7 +461,17 @@ class HistoryWidget(QtWidgets.QWidget):
             result = editor.exec()
 
             if not result:
-                return
+                return None
+        return True
+
+    def import_krita(self, doc_id):
+        """Imports a krita .kra into the version manager
+
+        Parameters:
+        doc_id (str) - unused
+        """
+        if not self.check_operation_readiness():
+            return
 
         # get name of krita file to import
         results = QtWidgets.QFileDialog.getOpenFileName(self,
