@@ -163,7 +163,8 @@ class HistoryWidget(QtWidgets.QWidget):
             'Generate Thumbnail': 'generate_thumbnail',
             'Make Active': 'make_active',
             'Delete Checkpoint': 'delete_checkpoint',
-            'Load Checkpoint': 'load_checkpoint'}
+            'Load Checkpoint': 'load_checkpoint',
+            'Import Krita Image': 'import_krita'}
 
         for desc in self.context_menu_actions:
             self.context_menu.addAction(QtWidgets.QAction(desc, self))
@@ -405,6 +406,97 @@ class HistoryWidget(QtWidgets.QWidget):
         vmutils.unlock_history()
         self.reload_history()
         self.status_update('Checkpoint removal complete')
+
+    def import_krita(self, doc_id):
+        """Imports a krita .kra into the history
+
+        Parameters:
+        doc_id (str) - unused
+        """
+        current_doc = Krita.instance().activeDocument()
+
+        if current_doc.modified():
+            editor = QtWidgets.QDialog(self)
+
+            layout = QtWidgets.QVBoxLayout()
+            editor.setLayout(layout)
+
+            for text in ('The current document has been modified.',
+                         'Please save and create a checkpoint',
+                         'before importing a krita file,'):
+                label = QtWidgets.QLabel(text)
+                label.setAlignment(Qt.AlignCenter)
+                layout.addWidget(label)
+
+            # create ok/cancel buttons
+            buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+            buttons.accepted.connect(editor.accept)
+            buttons.rejected.connect(editor.reject)
+
+            layout.addWidget(buttons)
+
+            # show window and get result
+            result = editor.exec()
+            return
+
+        # check if the current document has been checked into the history
+        current_doc_id = str(utils.creation_date(current_doc.fileName()))
+
+        if current_doc_id not in self.model.history:
+            editor = QtWidgets.QDialog(self)
+
+            layout = QtWidgets.QVBoxLayout()
+            editor.setLayout(layout)
+
+            for text in ('The current document currently does not have a checkpoint.',
+                         'Click on OK to continue importing,'
+                         'which will overwrite the current document.'):
+                label = QtWidgets.QLabel(text)
+                label.setAlignment(Qt.AlignCenter)
+                layout.addWidget(label)
+
+            # create ok/cancel buttons
+            buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok |
+                                                 QtWidgets.QDialogButtonBox.Cancel)
+            buttons.accepted.connect(editor.accept)
+            buttons.rejected.connect(editor.reject)
+
+            layout.addWidget(buttons)
+
+            # show window and get result
+            result = editor.exec()
+
+            if not result:
+                return
+
+        # get name of krita file to import
+        results = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                        'Import Krita Image',
+                                                        self.model.utils.krita_dir,
+                                                        'Krita Images(*.kra)')
+        filename = results[0]
+
+        # copy krita file to current document
+        self.status_update(
+            f'copying {filename} -> {self.model.utils.krita_filename}')
+        shutil.copyfile(filename, self.model.utils.krita_filename)
+
+        self.status_update('closing old document')
+        current_doc.close()
+
+        # open current document
+        self.status_update('Opening new document')
+        new_doc = Krita.instance().openDocument(self.model.utils.krita_filename)
+        Krita.instance().activeWindow().addView(new_doc)
+        Krita.instance().setActiveDocument(new_doc)
+
+        vm = version_manager.VersionManager()
+        vm.info_update.connect(self.status_update)
+        vm.add_checkpoint(msg=f'Imported krita file: {filename}',
+                          autosave=True,
+                          generate_thumbnail=True)
+        self.reload_history()
+        self.status_update('Finished making active')
 
     def set_default_icon_scale(self):
         self.slider_widget.setValue(64)

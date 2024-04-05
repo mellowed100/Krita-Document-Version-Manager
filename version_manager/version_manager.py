@@ -76,10 +76,8 @@ class VersionManager(QtCore.QObject):
         target_dim = 240.0
         width = clone.width()
         height = clone.height()
-        self.info_update.emit(f'width={width} height={height}')
         max_dim = max(width, height)
         scale_factor = target_dim/max_dim
-        self.info_update.emit(f'scale_factor={scale_factor}')
         # clone.scaleImage(int(width*scale_factor), int(height*scale_factor),
         #                  int(clone.xRes()*scale_factor), int(clone.yRes() * scale_factor), "box")
         new_width = int(width*scale_factor)

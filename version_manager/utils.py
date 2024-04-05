@@ -54,16 +54,17 @@ class Utils(QtCore.QObject):
         # get absolute path to krita document
         self._krita_file = os.path.abspath(self.krita_filename)
 
-        krita_path, self._krita_basename = os.path.split(self.krita_filename)
+        self._krita_path, self._krita_basename = os.path.split(
+            self.krita_filename)
 
         # set path to document data directory
         self._version_directory = os.path.join(
-            krita_path, '{}.d'.format(self.krita_basename))
+            self.krita_dir, '{}.d'.format(self.krita_basename))
 
         self._data_basename = 'history.json'
         self._data_filename = os.path.join(self.data_dir, self._data_basename)
 
-        # dictionary holding data for all document versions
+        # dictionary holding  ndata for all document versions
         self._history = None
 
         # lockfile used when writing history json file
@@ -73,6 +74,11 @@ class Utils(QtCore.QObject):
     def krita_filename(self):
         """Absolute path to source krita document"""
         return self._krita_file
+
+    @property
+    def krita_dir(self):
+        """Directory containing krita document"""
+        return self._krita_path
 
     @property
     def krita_basename(self):
