@@ -84,8 +84,7 @@
             </size>
            </property>
            <property name="plainText">
-            <string>auto commit
-</string>
+            <string>auto commit</string>
            </property>
           </widget>
          </item>
@@ -94,6 +93,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="add_checkpoint_btn">
+        <property name="toolTip">
+         <string>Adds a new checkpoint to the version manager.</string>
+        </property>
         <property name="text">
          <string>add checkpoint</string>
         </property>
@@ -138,6 +140,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="generate_thumbnail">
+           <property name="toolTip">
+            <string>Generate a thumbnail after creating a new checkpoint.</string>
+           </property>
            <property name="text">
             <string>generate thumbnail</string>
            </property>
@@ -148,6 +153,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="autosave">
+           <property name="toolTip">
+            <string>Enable to auto-save document before creating a new checkpoint.</string>
+           </property>
            <property name="text">
             <string>auto save</string>
            </property>
@@ -164,6 +172,16 @@
    </item>
    <item>
     <widget class="HistoryWidget" name="history_widget"/>
+   </item>
+   <item>
+    <widget class="QPushButton" name="import_image">
+     <property name="toolTip">
+      <string>Import a Krita image into this version manager.</string>
+     </property>
+     <property name="text">
+      <string>Import Krita Image</string>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QTextEdit" name="debug_console">

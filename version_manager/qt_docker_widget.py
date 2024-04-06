@@ -46,6 +46,7 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
         self.history_widget.info_update.connect(self.info_update)
         self.history_widget.error_update.connect(self.report_error)
+        self.import_image.clicked.connect(self.history_widget.import_krita)
 
     def add_checkpoint(self, s):
         """Create a new document checkpoint"""
@@ -56,9 +57,6 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
                                                generate_thumbnail=self.generate_thumbnail.checkState() == 2
                                                )
 
-            self.history_widget.reload_history()
-
-            self.info_update('Add Checkpoint successfully completed.')
         except Exception as e:
             self.report_error(str(e), 'Error - Operation Failed')
             return
