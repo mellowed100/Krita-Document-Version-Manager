@@ -22,7 +22,7 @@ class QtDocker(DockWidget):
 
         self.setWindowTitle('Document Version Manager')
 
-        self._version_ui = VersionUI()
+        self._version_ui = VersionManager()
 
         self.setWidget(self._version_ui)
 
@@ -39,11 +39,11 @@ class QtDocker(DockWidget):
             self._version_ui.history_widget.reload_history()
 
 
-class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
+class VersionManager(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
     """Widget containing document version history and new checkpoint widgets"""
 
     def __init__(self, parent=None):
-        super(VersionUI, self).__init__(parent)
+        super(VersionManager, self).__init__(parent)
         self.setupUi(self)
 
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
@@ -66,8 +66,8 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
 
     def report_error(self, msg, title='Error - Operation Failed'):
         self.info_update(str(msg))
-        self.message_box(str(msg), 'Error - Operation Failed')
-        raise Exception(str(msg))
+        self.message_box(str(msg), title)
+        # raise Exception(str(msg))
 
     def info_update(self, msg):
         current_time = time.strftime('%H:%M:%S', time.localtime())
