@@ -203,7 +203,7 @@ class Utils(QtCore.QObject):
 
         # more human readable form for displaying in history widget.
         date = datetime.fromtimestamp(modtime).strftime(
-            '%a, %B %e, %Y - %I:%M %p')
+            '%m/%d/%Y\n%I:%M %p\n%A')
 
         # name of directory to hold checkpoint data
         dirname = datetime.fromtimestamp(
