@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: © Cesar Velazquez <cesarve@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from krita import (DockWidgetFactory,
                    DockWidgetFactoryBase)
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: © Cesar Velazquez <cesarve@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function

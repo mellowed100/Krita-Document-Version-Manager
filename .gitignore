@@ -1,8 +1,8 @@
 __pycache__
 *.pyc
 
-.test.kra
-test.kra
+tests
+videos
 
 .sconsign.dblite
 
