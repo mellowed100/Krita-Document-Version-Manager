@@ -46,8 +46,10 @@ class TableModel(QtCore.QAbstractTableModel):
 
 
 class HistoryWidget(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, data_dir):
         super().__init__()
+
+        self._data_dir = data_dir
 
         layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
@@ -63,8 +65,14 @@ class HistoryWidget(QtWidgets.QWidget):
 
         self.model = TableModel(model)
         self.table.setModel(self.model)
+        # self.table.setSizeAdjustPolicy(
+        #     QtWidgets.QAbstractScrollArea.AdjustToContents)
+        # self.table.resizeColumnsToContents()
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().hide()
+        self.table.horizontalHeader().setStretchLastSection(True)
         self.table.resizeRowsToContents()
-        self.table.resizeColumnsToContents()
+        self.table.resizeColumnToContents(0)
 
         layout.addWidget(self.table)
 
@@ -81,8 +89,11 @@ class HistoryWidget(QtWidgets.QWidget):
         self.model.setThumbnailScale(scale_factor)
         self.model.dataChanged.emit(self.model.index(
             0, 0), self.model.index(0, self.model.rowCount(0)))
+
         self.table.resizeRowsToContents()
-        self.table.resizeColumnsToContents()
+        # self.table.resizeColumnsToContents()
+        # self.table.resizeRowsToContents()
+        self.table.resizeColumnToContents(0)
 
 
 class MainWindow(QtWidgets.QMainWindow):
