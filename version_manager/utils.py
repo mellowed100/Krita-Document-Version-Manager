@@ -44,6 +44,8 @@ class Utils(QtCore.QObject):
         filename (str) - Krita document .kra to manage
         """
 
+        super().__init__()
+
         self._krita_file = filename
 
         # check source krita document

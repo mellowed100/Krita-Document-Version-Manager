@@ -9,7 +9,6 @@ for script in Split("""
 __init__.py
 utils.py
 portalocker.py
-version_manager.py
 qt_docker_widget.py
 qt_history_widget.py
 """):

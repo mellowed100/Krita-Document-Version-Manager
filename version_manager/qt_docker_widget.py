@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets
 from krita import DockWidget
 
 from . import qt_docker_widget_ui
-from . import version_manager
+from .utils import Utils
 
 
 class QtDocker(DockWidget):
@@ -33,7 +33,7 @@ class QtDocker(DockWidget):
         if not self.active_doc or self.active_doc.fileName() != doc.fileName():
             self.active_doc = doc
             self._version_ui.info_update('Switching documents')
-            self._version_ui.reload_history()
+            self._version_ui.history_widget.reload_history()
 
 
 class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
@@ -47,24 +47,16 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.history_widget.info_update.connect(self.info_update)
         self.history_widget.error_update.connect(self.report_error)
 
-    def reload_history(self):
-        """Reloads document history"""
-
-        self.history_widget.reload_history()
-
     def add_checkpoint(self, s):
         """Create a new document checkpoint"""
 
-        vm = version_manager.VersionManager()
-        vm.info_update.connect(self.info_update)
-
         try:
-            vm.add_checkpoint(msg=self.checkpoint_msg.toPlainText(),
-                              autosave=self.autosave.checkState() == 2,
-                              generate_thumbnail=self.generate_thumbnail.checkState() == 2
-                              )
+            self.history_widget.add_checkpoint(msg=self.checkpoint_msg.toPlainText(),
+                                               autosave=self.autosave.checkState() == 2,
+                                               generate_thumbnail=self.generate_thumbnail.checkState() == 2
+                                               )
 
-            self.reload_history()
+            self.history_widget.reload_history()
 
             self.info_update('Add Checkpoint successfully completed.')
         except Exception as e:
@@ -74,6 +66,7 @@ class VersionUI(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
     def report_error(self, msg, title='Error - Operation Failed'):
         self.info_update(str(msg))
         self.message_box(str(msg), 'Error - Operation Failed')
+        raise Exception(str(msg))
 
     def info_update(self, msg):
         current_time = time.strftime('%H:%M:%S', time.localtime())

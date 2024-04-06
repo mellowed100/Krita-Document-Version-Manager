@@ -6,10 +6,14 @@ from __future__ import unicode_literals
 import os
 import ast
 import shutil
+import krita
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from . import utils
-from . import version_manager
+
+
+class CheckFailed(Exception):
+    pass
 
 
 class HistoryModel(QtCore.QAbstractTableModel):
@@ -153,7 +157,7 @@ class HistoryWidget(QtWidgets.QWidget):
 
         self.context_menu_actions = {
             'Edit Checkpoint Message': 'edit_message',
-            'Generate Thumbnail': 'generate_thumbnail',
+            'Generate Thumbnail': 'generate_thumbnail_action',
             'Make Active': 'make_active',
             'Delete Checkpoint': 'delete_checkpoint',
             'Load Checkpoint': 'load_checkpoint',
@@ -263,7 +267,12 @@ class HistoryWidget(QtWidgets.QWidget):
         doc_id (str): document key to make active
         """
 
-        if not self.check_operation_readiness():
+        try:
+            self.check_has_filename()
+            self.check_modified_state()
+            self.check_has_checkpoint()
+        except CheckFailed as checkfail:
+            self.report_error(str(checkfail), 'Checks failed')
             return
 
         current_doc = Krita.instance().activeDocument()
@@ -288,15 +297,13 @@ class HistoryWidget(QtWidgets.QWidget):
         Krita.instance().activeWindow().addView(new_doc)
         Krita.instance().setActiveDocument(new_doc)
 
-        vm = version_manager.VersionManager()
-        vm.info_update.connect(self.status_update)
-        vm.add_checkpoint(msg=f'Copied from version: {old_date}',
-                          autosave=True,
-                          generate_thumbnail=True)
+        self.add_checkpoint(msg=f'Copied from version: {old_date}',
+                            autosave=True,
+                            generate_thumbnail=True)
         self.reload_history()
         self.status_update('Finished making active')
 
-    def generate_thumbnail(self, doc_id):
+    def generate_thumbnail_action(self, doc_id):
         """Generates new thumbnail image for given version.
 
         Parameters:
@@ -315,12 +322,9 @@ class HistoryWidget(QtWidgets.QWidget):
 
         self.status_update(f'opening {thumbnail_src}')
         doc = Krita.instance().openDocument(thumbnail_src)
-        # Krita.instance().activeWindow().addView(doc)
-        vm = version_manager.VersionManager()
-        vm.info_update.connect(self.status_update)
 
         self.status_update(f'Generating thumbnail {thumbnail_tgt}')
-        vm.generate_thumbnail(doc, thumbnail_tgt)
+        self.generate_thumbnail(doc, thumbnail_tgt)
         doc.close()
 
         # update path to thumbnail in history.json if needed
@@ -397,72 +401,50 @@ class HistoryWidget(QtWidgets.QWidget):
         self.reload_history()
         self.status_update('Checkpoint removal complete')
 
-    def check_operation_readiness(self):
-        """Check that current document can be safely overriden.
+    def check_has_filename(self):
+        """Checks that current document has filename.
 
-        Checks that current document doesn't have any usaved modifications.
-        checks that current document krita file has a checkpoint.
-
-        Returns
-        True if all checks pass
-        None if any check fails
+        raises CheckFailException on failure
         """
         current_doc = Krita.instance().activeDocument()
 
-        if current_doc.modified():
-            editor = QtWidgets.QDialog(self)
+        # check for new document that hasn't been saved yet
+        if current_doc.fileName() == "":
+            raise CheckFailed(
+                "No filename found.\nPlease save the current document before creating a checkpoint")
 
-            layout = QtWidgets.QVBoxLayout()
-            editor.setLayout(layout)
+    def check_modified_state(self, autosave=False):
 
-            for text in ('The current document has been modified.',
-                         'Please save and create a checkpoint',
-                         'before continuing the operation,'):
-                label = QtWidgets.QLabel(text)
-                label.setAlignment(Qt.AlignCenter)
-                layout.addWidget(label)
+        current_doc = Krita.instance().activeDocument()
 
-            # create ok/cancel buttons
-            buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
-            buttons.accepted.connect(editor.accept)
-            buttons.rejected.connect(editor.reject)
+        if not current_doc.modified():
+            return
 
-            layout.addWidget(buttons)
+        if autosave:
+            self.info_update.emit(
+                'Auto-Save enabled. Saving document to {}'.format(current_doc.fileName()))
+            current_doc.save()
+            return
 
-            # show window and get result
-            result = editor.exec()
-            return None
+        msg = ''.join(['The current document has been modified.',
+                       'Please save and create a checkpoint',
+                       'before continuing the operation.'])
 
-        # check if the current document has been checked into the version manager
+        raise CheckFailed(msg)
+
+    def check_has_checkpoint(self):
+        """Check if current document has a checkpoint in the version manager.
+
+        Raises CheckFailed exception if no checkpoint found.
+        """
+
+        current_doc = Krita.instance().activeDocument()
         current_doc_id = str(utils.creation_date(current_doc.fileName()))
 
         if current_doc_id not in self.model.history:
-            editor = QtWidgets.QDialog(self)
-
-            layout = QtWidgets.QVBoxLayout()
-            editor.setLayout(layout)
-
-            for text in ('The current document currently does not have a checkpoint.',
-                         'Click on OK to continue the operation'
-                         'or Cancel to abort the operation.'):
-                label = QtWidgets.QLabel(text)
-                label.setAlignment(Qt.AlignCenter)
-                layout.addWidget(label)
-
-            # create ok/cancel buttons
-            buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok |
-                                                 QtWidgets.QDialogButtonBox.Cancel)
-            buttons.accepted.connect(editor.accept)
-            buttons.rejected.connect(editor.reject)
-
-            layout.addWidget(buttons)
-
-            # show window and get result
-            result = editor.exec()
-
-            if not result:
-                return None
-        return True
+            raise CheckFailed(''.join(['The current document currently ',
+                                       'does not have a checkpoint.',
+                                       'Please create one before continuing']))
 
     def import_krita(self, doc_id):
         """Imports a krita .kra into the version manager
@@ -470,7 +452,12 @@ class HistoryWidget(QtWidgets.QWidget):
         Parameters:
         doc_id (str) - unused
         """
-        if not self.check_operation_readiness():
+        try:
+            self.check_has_filename()
+            self.check_modified_state()
+            self.check_has_checkpoint()
+        except CheckFailed as checkfail:
+            self.report_error(str(checkfail), 'Checks failed')
             return
 
         # get name of krita file to import
@@ -486,7 +473,7 @@ class HistoryWidget(QtWidgets.QWidget):
         shutil.copyfile(filename, self.model.utils.krita_filename)
 
         self.status_update('closing old document')
-        current_doc.close()
+        current_doc = Krita.instance().activeDocument().close()
 
         # open current document
         self.status_update('Opening new document')
@@ -494,11 +481,9 @@ class HistoryWidget(QtWidgets.QWidget):
         Krita.instance().activeWindow().addView(new_doc)
         Krita.instance().setActiveDocument(new_doc)
 
-        vm = version_manager.VersionManager()
-        vm.info_update.connect(self.status_update)
-        vm.add_checkpoint(msg=f'Imported krita file: {filename}',
-                          autosave=True,
-                          generate_thumbnail=True)
+        self.add_checkpoint(msg=f'Imported krita file: {filename}',
+                            autosave=True,
+                            generate_thumbnail=True)
         self.reload_history()
         self.status_update('Finished making active')
 
@@ -566,3 +551,72 @@ class HistoryWidget(QtWidgets.QWidget):
     def setRowCount(self, n):
         '''Does nothing. Included here to be compatible with Designer generated gui'''
         pass
+
+    def add_checkpoint(self, msg='', autosave=False, generate_thumbnail=True):
+        """Adds document checkpoint to data directory
+
+        Parameters:
+            msg (str) - checkpoint message
+            autosave (bool) - Save the file first before creating checkpoint
+        """
+        try:
+            self.check_has_filename()
+            self.check_modified_state(autosave=autosave)
+        except CheckFailed as checkfail:
+            self.report_error(str(checkfail), 'Checks failed')
+            return
+
+        doc = Krita.instance().activeDocument()
+
+        vmutils = utils.Utils(doc.fileName())
+
+        # create data directory if this is the first check-point
+        if not vmutils.data_dir_exists():
+            self.info_update.emit(
+                f'Initializing data directory {vmutils.data_dir}')
+            vmutils.init()
+
+        # Create new checkpoint
+        doc_id, doc_data = vmutils.add_checkpoint(msg)
+
+        if generate_thumbnail:
+            filename = os.path.join(
+                vmutils.data_dir, doc_data['dirname'], 'thumbnail.png')
+            self.info_update.emit(f'Generating thumbnail: {filename}')
+            self.generate_thumbnail(doc, filename)
+            self.info_update.emit(
+                'Updating document history with thumbnail information')
+            vmutils.lock_history()
+            vmutils.read_history()
+            if doc_id not in vmutils.history:
+                vmutils.unlock_history()
+                raise KeyError(f'document {doc_id} not found in history json')
+            doc_data = vmutils.history[doc_id]
+            doc_data['thumbnail'] = 'thumbnail.png'
+            vmutils.write_history()
+            vmutils.unlock_history()
+
+    def generate_thumbnail(self, doc, filename):
+        """Opens a krita document and generates a new thumbnail images
+
+        Parameters:
+            doc (Krita static instance) - document to create clone of
+            filename (str) - path to save generated thumbnail to.
+        """
+
+        clone = doc.clone()
+        clone.setBatchmode(True)
+        clone.flatten()
+
+        target_dim = 240.0
+        width = clone.width()
+        height = clone.height()
+        max_dim = max(width, height)
+        scale_factor = target_dim/max_dim
+        new_width = int(width*scale_factor)
+        new_height = int(height*scale_factor)
+        clone.scaleImage(new_width, new_height,
+                         clone.resolution(), clone.resolution(), "box")
+        self.info_update.emit(f'saving thumbnail to {filename}')
+        clone.exportImage(filename, krita.InfoObject())
+        clone.close()
