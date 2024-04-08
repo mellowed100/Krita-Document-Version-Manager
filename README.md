@@ -1,5 +1,5 @@
 # What is it?
-**Krita Document Version Manager** is a plugin to help manage your krita image files. It does this by organinzing the different versions of a single Krita image file.
+**Krita Document Version Manager** is a plugin to help manage your krita image files. It does this by managing the different versions of a Krita image file.
 
 | before |
 | -------|
