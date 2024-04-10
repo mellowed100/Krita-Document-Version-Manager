@@ -14,6 +14,7 @@ utils.py
 portalocker.py
 qt_docker_widget.py
 qt_history_widget.py
+qt_docker_widget_ui.py
 """):
     env.Install(env['version_manager_dir'], f'version_manager/{script}')
 
@@ -29,7 +30,7 @@ qt_docker_widget_ui
             """.split()
 
 for gui in guis:
-    target = '{tgt}/{gui}.py'.format(tgt=env['version_manager_dir'], gui=gui)
+    target = 'version_manager/{gui}.py'.format(gui=gui)
     source = 'version_manager/{gui}.ui'.format(gui=gui)
 
     # build .py from .ui
@@ -37,4 +38,4 @@ for gui in guis:
 
     # flag generated python file for deletion
     env.Clean(
-        dep, '{tgt}/{gui}.py'.format(tgt=env['version_manager_dir'], gui=gui))
+        dep, 'version_manager/{gui}.py'.format(gui=gui))
