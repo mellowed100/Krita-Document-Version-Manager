@@ -89,80 +89,34 @@
           </widget>
          </item>
          <item>
-          <widget class="QFrame" name="frame_4">
+          <widget class="QPushButton" name="add_checkpoint_btn">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="baseSize">
+           <property name="minimumSize">
             <size>
              <width>0</width>
              <height>0</height>
             </size>
            </property>
-           <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
            </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
+           <property name="toolTip">
+            <string>Adds a new checkpoint to the version manager.</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <property name="spacing">
-             <number>1</number>
-            </property>
-            <property name="leftMargin">
-             <number>1</number>
-            </property>
-            <property name="topMargin">
-             <number>1</number>
-            </property>
-            <property name="rightMargin">
-             <number>1</number>
-            </property>
-            <property name="bottomMargin">
-             <number>1</number>
-            </property>
-            <item>
-             <widget class="QPushButton" name="menu_btn">
-              <property name="text">
-               <string>menu</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="add_checkpoint_btn">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Adds a new checkpoint to the version manager.</string>
-              </property>
-              <property name="text">
-               <string>add checkpoint</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <property name="text">
+            <string>add checkpoint</string>
+           </property>
           </widget>
          </item>
         </layout>
@@ -235,6 +189,13 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="menu_btn">
+     <property name="text">
+      <string>menu</string>
+     </property>
     </widget>
    </item>
    <item>
