@@ -4,24 +4,35 @@ import os
  https://www.oreilly.com/library/view/python-cookbook/0596001673/ch04s25.html   
 """
 
-
-# needs win32all to work on Windows
 if os.name == 'nt':
-    import win32con
-    import win32file
-    import pywintypes
-    LOCK_EX = win32con.LOCKFILE_EXCLUSIVE_LOCK
-    LOCK_SH = 0  # the default
-    LOCK_NB = win32con.LOCKFILE_FAIL_IMMEDIATELY
-    __overlapped = pywintypes.OVERLAPPED()
+    # Hiding this section because the windows version of Krita
+    # doesn't include these modules with its version of python.
+
+    # import win32con
+    # import win32file
+    # import pywintypes
+    # LOCK_EX = win32con.LOCKFILE_EXCLUSIVE_LOCK
+    # LOCK_SH = 0  # the default
+    # LOCK_NB = win32con.LOCKFILE_FAIL_IMMEDIATELY
+    # __overlapped = pywintypes.OVERLAPPED()
+
+    # def lock(file, flags):
+    #     hfile = win32file._get_osfhandle(file.fileno())
+    #     win32file.LockFileEx(hfile, flags, 0, 0xffff0000, __overlapped)
+
+    # def unlock(file):
+    #     hfile = win32file._get_osfhandle(file.fileno())
+    #     win32file.UnlockFileEx(hfile, 0, 0xffff0000, __overlapped)
+
+    LOCK_EX = 0
+    LOCK_SH = 0
+    LOCK_NB = 0
 
     def lock(file, flags):
-        hfile = win32file._get_osfhandle(file.fileno())
-        win32file.LockFileEx(hfile, flags, 0, 0xffff0000, __overlapped)
+        pass
 
     def unlock(file):
-        hfile = win32file._get_osfhandle(file.fileno())
-        win32file.UnlockFileEx(hfile, 0, 0xffff0000, __overlapped)
+        pass
 elif os.name == 'posix':
     import fcntl
     from fcntl import LOCK_EX, LOCK_SH, LOCK_NB

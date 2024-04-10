@@ -12,25 +12,16 @@ import errno
 import shutil
 import json
 from datetime import datetime
-from pwd import getpwuid
 from PyQt5 import QtCore
 from . import portalocker
 
-
-def creation_date(path_to_file):
-    """
-    From https://stackoverflow.com/questions/237079/how-do-i-get-file-creation-and-modification-date-times
-    """
-    if platform.system() == 'Windows':
-        return os.path.getctime(path_to_file)
-    else:
-        stat = os.stat(path_to_file)
-        try:
-            return stat.st_birthtime
-        except AttributeError:
-            # We're probably on Linux. No easy way to get creation dates here,
-            # so we'll settle for when its content was last modified.
-            return stat.st_mtime
+if os.name == "nt":
+    # import win32api
+    # import win32con
+    # import win32security
+    pass
+else:
+    from pwd import getpwuid
 
 
 class Utils(QtCore.QObject):
@@ -40,6 +31,10 @@ class Utils(QtCore.QObject):
     document_template = {'filename': '', 'thumbnail': '',
                          'mtime': 0., 'dirname': '', 'message': '',
                          'owner': '', 'date': ''}
+
+    # Signal to send text to debug console
+    info_update = QtCore.pyqtSignal(str)
+    error_update = QtCore.pyqtSignal(str, str)
 
     def __init__(self, filename):
         """
@@ -117,6 +112,19 @@ class Utils(QtCore.QObject):
     def history_exists(self):
         """Returns True if history file exists"""
         return os.path.exists(self.history_filename)
+
+    def report_error(self, msg, title):
+        """Emits error_update signal to open error dialog"""
+        self.error_update.emit(msg, title)
+
+    def status_update(self, msg):
+        """Emits info_update signal with message send to text box
+
+        Parameters:
+        msg (str) - Message to send
+        """
+
+        self.info_update.emit(msg)
 
     def init(self, force=False):
         """Create and initialize data directory
@@ -202,7 +210,7 @@ class Utils(QtCore.QObject):
             raise FileNotFoundError(f'File not found: {self.krita_filename}')
 
         # get modification time of krita file
-        modtime = creation_date(self.krita_filename)
+        modtime = os.path.getmtime(self.krita_filename)
 
         # more human readable form for displaying in history widget.
         date = datetime.fromtimestamp(modtime).strftime(
@@ -233,12 +241,21 @@ class Utils(QtCore.QObject):
         # create copy of document dictionary template
         self.history[doc_id] = Utils.document_template.copy()
 
+        if os.name == 'nt':
+            # sd = win32security.GetFileSecurity(self.krita_filename, win32security.OWNER_SECURITY_INFORMATION)
+            # owner_sid = sd.GetSecurityDescriptorOwner()
+            # name, domain, type = win32security.LookupAccountSid(None, owner_sid)
+            # owner = name
+            owner = ''
+        else:
+            owner = getpwuid(os.stat(self.krita_filename).st_uid).pw_name
+
         for key, value in (('mtime', modtime),
                            ('filename', self.krita_basename),
                            ('dirname', dirname),
                            ('message', repr(msg)),
                            ('date', date),
-                           ('owner', getpwuid(os.stat(self.krita_filename).st_uid).pw_name)):
+                           ('owner', owner)):
             self.history[doc_id][key] = value
 
         # make document data directory
