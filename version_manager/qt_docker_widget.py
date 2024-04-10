@@ -11,7 +11,6 @@ from PyQt5 import QtWidgets
 from krita import DockWidget
 
 from . import qt_docker_widget_ui
-from .utils import Utils
 
 
 class QtDocker(DockWidget):
@@ -49,7 +48,23 @@ class VersionManager(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
         self.history_widget.info_update.connect(self.info_update)
         self.history_widget.error_update.connect(self.report_error)
-        self.import_image.clicked.connect(self.history_widget.import_krita)
+
+        # setup history menu
+        self.history_menu = QtWidgets.QMenu(self)
+
+        self.history_menu_actions = {
+            'Reload History': {'func': 'reload_history',
+                               'tooltip': 'Reload document version history.'},
+            'Import Krita Image': {'func': 'import_krita',
+                                   'tooltip': 'Import a krita image into this version history'}}
+
+        for desc in self.history_menu_actions:
+            action = QtWidgets.QAction(desc, self)
+            action.setToolTip(self.history_menu_actions[desc]['tooltip'])
+            action.triggered.connect(
+                getattr(self.history_widget, self.history_menu_actions[desc]['func']))
+            self.history_menu.addAction(action)
+        self.menu_btn.setMenu(self.history_menu)
 
     def add_checkpoint(self, s):
         """Create a new document checkpoint"""

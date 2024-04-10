@@ -167,6 +167,7 @@ class HistoryWidget(QtWidgets.QWidget):
         self.slider_widget.setValue(default_thumbnail_scale)
         layout.addWidget(self.slider_widget)
 
+        # setup context menu
         self.context_menu = QtWidgets.QMenu(self)
         self.context_menu.setToolTipsVisible(True)
 
@@ -321,11 +322,12 @@ class HistoryWidget(QtWidgets.QWidget):
         Krita.instance().activeWindow().addView(new_doc)
         Krita.instance().setActiveDocument(new_doc)
 
-        self.add_checkpoint(msg=f'Copied from version: {old_date}',
+        old_message = ast.literal_eval(self.model.history[doc_id]['message'])
+        self.add_checkpoint(msg=f'Copied from version: {old_date}\n\n{old_message}',
                             autosave=True,
                             generate_thumbnail=True)
         self.reload_history()
-        self.status_update('Finished making active')
+        self.status_update('Finished making current')
 
     def generate_thumbnail_action(self, doc_id):
         """Generates new thumbnail image for given version.
@@ -470,7 +472,8 @@ class HistoryWidget(QtWidgets.QWidget):
         """
 
         current_doc = Krita.instance().activeDocument()
-        current_doc_id = str(utils.creation_date(current_doc.fileName()))
+        # current_doc_id = str(utils.creation_date(current_doc.fileName()))
+        current_doc_id = str(os.path.getmtime(current_doc.fileName()))
 
         if current_doc_id not in self.model.history:
             raise CheckFailed(''.join(['The current document currently ',
@@ -486,7 +489,7 @@ class HistoryWidget(QtWidgets.QWidget):
         except CheckFailed as checkfail:
             self.report_error(str(checkfail), 'Checks failed')
             return
-
+        print('AAAAA')
         # get name of krita file to import
         results = QtWidgets.QFileDialog.getOpenFileName(self,
                                                         'Import Krita Image',
@@ -615,6 +618,7 @@ class HistoryWidget(QtWidgets.QWidget):
             msg (str) - checkpoint message
             autosave (bool) - Save the file first before creating checkpoint
         """
+
         try:
             self.check_has_filename()
             self.check_modified_state(autosave=autosave)
@@ -625,6 +629,8 @@ class HistoryWidget(QtWidgets.QWidget):
         doc = Krita.instance().activeDocument()
 
         vmutils = utils.Utils(doc.fileName())
+        vmutils.info_update.connect(self.status_update)
+        vmutils.error_update.connect(self.report_error)
 
         # create data directory if this is the first check-point
         if not vmutils.data_dir_exists():
@@ -653,7 +659,6 @@ class HistoryWidget(QtWidgets.QWidget):
             vmutils.unlock_history()
 
         self.reload_history()
-
         self.status_update('Add Checkpoint successfully completed.')
 
     def generate_thumbnail(self, doc, filename):
