@@ -7,13 +7,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
-import platform
 import errno
 import shutil
 import json
 from datetime import datetime
 from PyQt5 import QtCore
-from . import portalocker
 
 if os.name == "nt":
     # import win32api
@@ -167,15 +165,30 @@ class Utils(QtCore.QObject):
         lock_filename = os.path.join(
             self.data_dir, f'{self.history_basename}.lock')
 
-        self._lockfile = open(lock_filename, 'w')
+        self.status_update(f'Getting lock on {lock_filename}')
 
-        # use lockfile as a proxy for history.json
-        portalocker.lock(self._lockfile, portalocker.LOCK_EX)
+        self._lockfile = QtCore.QLockFile(lock_filename)
+
+        result = self._lockfile.tryLock(15)
+
+        if not result:
+            reason = ''
+            if result == QtCore.QLockFile.NoError:
+                reason = 'NoError'
+            elif result == QtCore.QLockFile.LockFailedError:
+                reason = 'LockFailedError'
+            elif result == QtCore.QLockFile.PermissionError:
+                reason = 'PermissionError'
+            else:
+                reason = 'UnknownError'
+            raise Exception(
+                f'Unable to obtain file lock on {lock_filename}: {reason}')
+        self.status_update('Lock aquired')
 
     def unlock_history(self):
         """Unlock history json file"""
-        portalocker.unlock(self._lockfile)
-        self._lockfile.close()
+
+        self._lockfile.unlock()
         self._lockfile = None
 
     def update_checkpoint_message(self, doc_id, msg):
