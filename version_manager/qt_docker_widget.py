@@ -52,19 +52,30 @@ class VersionManager(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         # setup history menu
         self.history_menu = QtWidgets.QMenu(self)
 
-        self.history_menu_actions = {
-            'Reload History': {'func': 'reload_history',
-                               'tooltip': 'Reload document version history.'},
-            'Import Krita Image': {'func': 'import_krita',
-                                   'tooltip': 'Import a krita image into this version history'}}
+        self.is_logview_visible = False
+        self.debug_console.setVisible(self.is_logview_visible)
 
-        for desc in self.history_menu_actions:
-            action = QtWidgets.QAction(desc, self)
-            action.setToolTip(self.history_menu_actions[desc]['tooltip'])
-            action.triggered.connect(
-                getattr(self.history_widget, self.history_menu_actions[desc]['func']))
-            self.history_menu.addAction(action)
+        action = QtWidgets.QAction('Reload History', self)
+        action.setToolTip('Reload document version history.')
+        action.triggered.connect(self.history_widget.reload_history)
+        self.history_menu.addAction(action)
+
+        action = QtWidgets.QAction('Import Krita Image', self)
+        action.setToolTip('Import a krita image into this version history')
+        action.triggered.connect(self.history_widget.import_krita)
+        self.history_menu.addAction(action)
+
+        action = QtWidgets.QAction('Toggle Log View', self)
+        action.setToolTip('Toggle visibility of log window.')
+        action.triggered.connect(self.toggle_log_view)
+        self.history_menu.addAction(action)
+
         self.menu_btn.setMenu(self.history_menu)
+
+    def toggle_log_view(self):
+        """Toggle visibility of log view"""
+        self.is_logview_visible = ~self.is_logview_visible
+        self.debug_console.setVisible(self.is_logview_visible)
 
     def add_checkpoint(self, s):
         """Create a new document checkpoint"""
