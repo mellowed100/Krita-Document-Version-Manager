@@ -1,6 +1,12 @@
 # What is it?
 **Krita Document Version Manager (KDVM)** is a plugin to help manage the different versions of a Krita image file. Instead of embedding the version of a Krita image into its filename like "artwork_v0001.kra" or "portrait_2024_04_11_a.kra", simply name your image file without any version info and let the plugin manage the rest, i.e. "artwork.kra" or "portrait.kra".
 
+
+<video autoplay loop playsinline width=300 src="https://github.com/mellowed100/Krita-Document-Version-Manager/assets/55254872/09aeaf5a-0343-47b8-a8e8-dbb0f2703c55"> video </video>
+
+
+
+
 # How does it do this?
 Behind the scenes, **KDVM** works by storing and managing the different versions of a Krita file in the filesystem. First, **KDVM** creates a directory to store the different versions. The name of the directory is the same name as the original Krita image file with a ".d" appended to it. 
 
