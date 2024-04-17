@@ -7,10 +7,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import time
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from krita import DockWidget
 
 from . import qt_docker_widget_ui
+from . import icons_rc
 
 
 class QtDocker(DockWidget):
@@ -48,6 +49,7 @@ class VersionManager(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.add_checkpoint_btn.clicked.connect(self.add_checkpoint)
         self.history_widget.info_update.connect(self.info_update)
         self.history_widget.error_update.connect(self.report_error)
+        self.history_widget.in_progress.connect(self.set_progress_indicator)
 
         # setup history menu
         self.history_menu = QtWidgets.QMenu(self)
@@ -71,6 +73,21 @@ class VersionManager(QtWidgets.QWidget, qt_docker_widget_ui.Ui_Form):
         self.history_menu.addAction(action)
 
         self.menu_btn.setMenu(self.history_menu)
+
+        self.set_progress_indicator(False)
+
+    def set_progress_indicator(self, state):
+        """Toggles State of in_progress indicator
+
+        Parameters:
+        state: (bool): True=in_progress False=ready
+        """
+        if state:
+            self.busy_indicator.setPixmap(QtGui.QPixmap(
+                ':/images/in_progress.png').scaledToWidth(17))
+        else:
+            self.busy_indicator.setPixmap(QtGui.QPixmap(
+                ':/images/ready.png').scaledToWidth(17))
 
     def toggle_log_view(self):
         """Toggle visibility of log view"""

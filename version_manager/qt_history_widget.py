@@ -113,6 +113,8 @@ class HistoryModel(QtCore.QAbstractTableModel):
         return len(self._data)
 
     def columnCount(self, index):
+        if self.rowCount(index) == 0:
+            return 0
         return len(self._data[0])
 
     def setThumbnailScale(self, factor):
@@ -136,6 +138,7 @@ class HistoryWidget(QtWidgets.QWidget):
     # Signal to send text to debug console
     info_update = QtCore.pyqtSignal(str)
     error_update = QtCore.pyqtSignal(str, str)
+    in_progress = QtCore.pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -228,6 +231,7 @@ class HistoryWidget(QtWidgets.QWidget):
         Parameters:
         doc_id (str): document key in history dictionary
         """
+        self.in_progress.emit(True)
 
         # get current message
         msg = self.model.history[doc_id]['message']
@@ -253,6 +257,7 @@ class HistoryWidget(QtWidgets.QWidget):
         # show window and get result
         result = editor.exec()
         if not result:
+            self.in_progress.emit(False)
             return
 
         # get new checkpoint message
@@ -260,11 +265,13 @@ class HistoryWidget(QtWidgets.QWidget):
 
         # check if msg is unchanged
         if msg == repr(new_msg):
+            self.in_progress.emit(False)
             return
 
         # commit new message to disk
         self.model.utils.update_checkpoint_message(doc_id, new_msg)
         self.reload_history()
+        self.in_progress.emit(False)
 
     def load_checkpoint(self, doc_id):
         """Loads a previous checkpoint into Krita
@@ -273,17 +280,20 @@ class HistoryWidget(QtWidgets.QWidget):
         doc_id (str): document key to make active
         """
 
+        self.in_progress.emit(True)
         current_doc = Krita.instance().activeDocument()
 
         filename = os.path.join(self.model.utils.data_dir,
                                 self.model.history[doc_id]['dirname'],
                                 self.model.history[doc_id]['filename'])
         if not os.path.exists(filename):
+            self.in_progress.emit(False)
             raise FileNotFoundError(filename)
 
         new_doc = Krita.instance().openDocument(filename)
         Krita.instance().activeWindow().addView(new_doc)
         Krita.instance().setActiveDocument(new_doc)
+        self.in_progress.emit(False)
 
     def make_checkpoint_current(self, doc_id):
         """Makes a previous checkpoint the current document
@@ -292,11 +302,13 @@ class HistoryWidget(QtWidgets.QWidget):
         doc_id (str): document key to make active
         """
 
+        self.in_progress.emit(True)
         try:
             self.check_has_filename()
             self.check_modified_state()
             self.check_has_checkpoint()
         except CheckFailed as checkfail:
+            self.in_progress.emit(False)
             self.report_error(str(checkfail), 'Checks failed')
             return
 
@@ -308,6 +320,7 @@ class HistoryWidget(QtWidgets.QWidget):
                                 self.model.history[doc_id]['dirname'],
                                 self.model.history[doc_id]['filename'])
         if not os.path.exists(filename):
+            self.in_progress.emit(False)
             raise FileNotFoundError(filename)
 
         self.status_update(
@@ -329,6 +342,8 @@ class HistoryWidget(QtWidgets.QWidget):
         self.reload_history()
         self.status_update('Finished making current')
 
+        self.in_progress.emit(False)
+
     def generate_thumbnail_action(self, doc_id):
         """Generates new thumbnail image for given version.
 
@@ -336,10 +351,12 @@ class HistoryWidget(QtWidgets.QWidget):
         doc_id (str) - Document ID for version to generate ID for.
         """
 
+        self.in_progress.emit(True)
         thumbnail_src = os.path.join(self.model.utils.data_dir,
                                      self.model.history[doc_id]['dirname'],
                                      self.model.history[doc_id]['filename'])
         if not os.path.exists(thumbnail_src):
+            self.in_progress.emit(False)
             raise FileNotFoundError(thumbnail_src)
 
         thumbnail_tgt = os.path.join(self.model.utils.data_dir,
@@ -365,6 +382,8 @@ class HistoryWidget(QtWidgets.QWidget):
         self.reload_history()
         self.status_update('Finished generating thumbnail')
 
+        self.in_progress.emit(False)
+
     def delete_checkpoint(self, doc_id):
         """Deletes a checkpoint from the filesystem and history.json
 
@@ -372,6 +391,7 @@ class HistoryWidget(QtWidgets.QWidget):
         doc_id (str) - Document ID key to delete
         """
 
+        self.in_progress.emit(True)
         date = self.model.history[doc_id]['date']
 
         editor = QtWidgets.QDialog(self)
@@ -397,12 +417,14 @@ class HistoryWidget(QtWidgets.QWidget):
         # show window and get result
         result = editor.exec()
         if not result:
+            self.in_progress.emit(True)
             return
 
         vmutils = utils.Utils(Krita.instance().activeDocument().fileName())
         vmutils.read_history()
 
         if doc_id not in vmutils.history:
+            self.in_progress.emit(False)
             raise IndexError(
                 'Cannot find document id: {doc_id} in history.json')
 
@@ -410,6 +432,7 @@ class HistoryWidget(QtWidgets.QWidget):
                                vmutils.history[doc_id]['dirname'])
 
         if not os.path.isdir(tgt_dir):
+            self.in_progress.emit(False)
             raise FileNotFoundError(f'Document directory not found: {tgt_dir}')
 
         self.status_update(f'Removing document directory {tgt_dir}')
@@ -419,6 +442,7 @@ class HistoryWidget(QtWidgets.QWidget):
             shutil.rmtree(tgt_dir)
             del vmutils.history[doc_id]
         except Exception as e:
+            self.in_progress.emit(False)
             vmutils.unlock_history()
             self.report_error(str(e), 'Checkpoint delete failed')
             return
@@ -426,6 +450,8 @@ class HistoryWidget(QtWidgets.QWidget):
         vmutils.unlock_history()
         self.reload_history()
         self.status_update('Checkpoint removal complete')
+
+        self.in_progress.emit(False)
 
     def check_has_filename(self):
         """Checks that current document has filename.
@@ -482,14 +508,16 @@ class HistoryWidget(QtWidgets.QWidget):
 
     def import_krita(self):
         """Imports a krita .kra into the version manager"""
+        self.in_progress.emit(True)
         try:
             self.check_has_filename()
             self.check_modified_state()
             self.check_has_checkpoint()
         except CheckFailed as checkfail:
+            self.in_progress.emit(False)
             self.report_error(str(checkfail), 'Checks failed')
             return
-        print('AAAAA')
+
         # get name of krita file to import
         results = QtWidgets.QFileDialog.getOpenFileName(self,
                                                         'Import Krita Image',
@@ -516,6 +544,7 @@ class HistoryWidget(QtWidgets.QWidget):
                             generate_thumbnail=True)
         self.reload_history()
         self.status_update('Finished import krita file.')
+        self.in_progress.emit(False)
 
     def show_in_browser(self, doc_id):
         """Opens up system file browser on directory containing krita document
@@ -523,10 +552,12 @@ class HistoryWidget(QtWidgets.QWidget):
         Parameters:
         doc_id (str) - document id to load into file browser
         """
+        self.in_progress.emit(False)
         try:
             self.check_has_filename()
             self.check_has_checkpoint()
         except CheckFailed as checkfail:
+            self.in_progress.emit(False)
             self.report_error(str(checkfail), 'Checks failed')
             return
 
@@ -543,7 +574,10 @@ class HistoryWidget(QtWidgets.QWidget):
             try:
                 subprocess.Popen(['xdg-open', doc_dir])
             except OSError:
+                self.in_progress.emit(False)
                 raise Exception('Unknown system')
+
+        self.in_progress.emit(False)
 
     def set_default_icon_scale(self):
         self.slider_widget.setValue(64)
@@ -594,6 +628,7 @@ class HistoryWidget(QtWidgets.QWidget):
         s (int) - New thumbnail width (in pixels)
         """
 
+        self.in_progress.emit(True)
         if not self.model:
             return
 
@@ -602,6 +637,8 @@ class HistoryWidget(QtWidgets.QWidget):
 
         self.table.resizeRowsToContents()
         self.table.resizeColumnToContents(1)
+
+        self.in_progress.emit(False)
 
     def setColumnCount(self, n):
         '''Does nothing. Included here to be compatible with Designer generated gui'''
@@ -619,10 +656,12 @@ class HistoryWidget(QtWidgets.QWidget):
             autosave (bool) - Save the file first before creating checkpoint
         """
 
+        self.in_progress.emit(True)
         try:
             self.check_has_filename()
             self.check_modified_state(autosave=autosave)
         except CheckFailed as checkfail:
+            self.in_progress.emit(False)
             self.report_error(str(checkfail), 'Checks failed')
             return
 
@@ -652,6 +691,7 @@ class HistoryWidget(QtWidgets.QWidget):
             vmutils.read_history()
             if doc_id not in vmutils.history:
                 vmutils.unlock_history()
+                self.in_progress.emit(False)
                 raise KeyError(f'document {doc_id} not found in history json')
             doc_data = vmutils.history[doc_id]
             doc_data['thumbnail'] = 'thumbnail.png'
@@ -661,6 +701,8 @@ class HistoryWidget(QtWidgets.QWidget):
         self.reload_history()
         self.status_update('Add Checkpoint successfully completed.')
 
+        self.in_progress.emit(False)
+
     def generate_thumbnail(self, doc, filename):
         """Opens a krita document and generates a new thumbnail images
 
@@ -669,6 +711,7 @@ class HistoryWidget(QtWidgets.QWidget):
             filename (str) - path to save generated thumbnail to.
         """
 
+        self.in_progress.emit(True)
         clone = doc.clone()
         clone.setBatchmode(True)
         clone.flatten()
@@ -685,3 +728,4 @@ class HistoryWidget(QtWidgets.QWidget):
         self.status_update(f'saving thumbnail to {filename}')
         clone.exportImage(filename, krita.InfoObject())
         clone.close()
+        self.in_progress.emit(False)
