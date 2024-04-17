@@ -28,7 +28,7 @@ icon_dep = env.Command('version_manager/icons_rc.py',
                        'version_manager/icons.qrc', 'pyrcc5 -o $TARGET $SOURCE')
 
 # create dependencies of icons.qrc on icon image files
-env.Depends('version_manager/icons.qrc',
+env.Depends('version_manager/icons_rc.py',
             ['version_manager/in_progress.png', 'version_manager/ready.png'])
 
 # flag the generated python file for deletion

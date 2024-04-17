@@ -82,7 +82,7 @@ class Ui_Form(object):
         self.frame_4.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_4.setObjectName("frame_4")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.frame_4)
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_2.setContentsMargins(9, 0, 0, 0)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.busy_indicator = QtWidgets.QLabel(self.frame_4)

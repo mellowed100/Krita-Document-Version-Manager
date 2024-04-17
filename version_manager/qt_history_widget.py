@@ -163,12 +163,34 @@ class HistoryWidget(QtWidgets.QWidget):
 
         layout.addWidget(self.table)
 
+        # create widget to encapsulate slider widgets
+        self.icon_scale = QtWidgets.QWidget()
+        icon_scale_layout = QtWidgets.QHBoxLayout()
+        self.icon_scale.setLayout(icon_scale_layout)
+
+        # setup icon scale decrement button
+        button_dec = QtWidgets.QPushButton()
+        icon_scale_layout.addWidget(button_dec)
+        button_dec.setText('-')
+        button_dec.setMaximumSize(20, 20)
+        button_dec.clicked.connect(self.thumbnail_decrement)
+
+        # setup icon scale slider
         self.slider_widget = QtWidgets.QSlider(Qt.Horizontal)
         self.slider_widget.valueChanged.connect(self.resize_thumbnails)
         self.slider_widget.setMinimum(10)
         self.slider_widget.setMaximum(300)
         self.slider_widget.setValue(default_thumbnail_scale)
-        layout.addWidget(self.slider_widget)
+        icon_scale_layout.addWidget(self.slider_widget)
+
+        # setup icon scale increment button
+        button_inc = QtWidgets.QPushButton()
+        icon_scale_layout.addWidget(button_inc)
+        button_inc.setText('+')
+        button_inc.setMaximumSize(20, 20)
+        button_inc.clicked.connect(self.thumbnail_increment)
+
+        layout.addWidget(self.icon_scale)
 
         # setup context menu
         self.context_menu = QtWidgets.QMenu(self)
@@ -620,6 +642,26 @@ class HistoryWidget(QtWidgets.QWidget):
 
         self.table.setEnabled(True)
         self.slider_widget.setEnabled(True)
+
+    def thumbnail_decrement(self):
+        """Decrements icons scale slider by it page step"""
+
+        page_step = self.slider_widget.pageStep()
+        value = self.slider_widget.value()
+        min_value = self.slider_widget.minimum()
+        max_value = self.slider_widget.maximum()
+        new_value = max(min_value, min(value-page_step, max_value))
+        self.slider_widget.setValue(new_value)
+
+    def thumbnail_increment(self):
+        """Increments icons scale slider by it page step"""
+
+        page_step = self.slider_widget.pageStep()
+        value = self.slider_widget.value()
+        min_value = self.slider_widget.minimum()
+        max_value = self.slider_widget.maximum()
+        new_value = max(min_value, min(value+page_step, max_value))
+        self.slider_widget.setValue(new_value)
 
     def resize_thumbnails(self, s):
         """Slot to receive thumbnail resize events.
