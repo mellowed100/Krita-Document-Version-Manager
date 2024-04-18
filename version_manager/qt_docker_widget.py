@@ -10,6 +10,7 @@ import time
 from PyQt5 import QtWidgets, QtGui
 from krita import DockWidget
 
+from . import icons_rc
 from . import qt_docker_widget_ui
 
 
