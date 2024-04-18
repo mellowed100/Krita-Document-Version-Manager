@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import krita
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
 from . import utils
 
 
@@ -96,16 +95,16 @@ class HistoryModel(QtCore.QAbstractTableModel):
                 default_thumbnail_resolution * self._thumbnail_scale)
             pixmap = pixmap.scaledToWidth(scale_factor)
 
-            if role == Qt.DecorationRole:
+            if role == QtCore.Qt.DecorationRole:
                 return pixmap
 
-            if role == Qt.SizeHintRole:
+            if role == QtCore.Qt.SizeHintRole:
                 return pixmap.size()
 
-        if index.column() == 2 and role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
+        if index.column() == 2 and role == QtCore.Qt.TextAlignmentRole:
+            return QtCore.Qt.AlignCenter
 
-        if role == Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             # return text for thumbnail filename
             return self._data[index.row()][index.column()]
 
@@ -176,7 +175,7 @@ class HistoryWidget(QtWidgets.QWidget):
         button_dec.clicked.connect(self.thumbnail_decrement)
 
         # setup icon scale slider
-        self.slider_widget = QtWidgets.QSlider(Qt.Horizontal)
+        self.slider_widget = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.slider_widget.valueChanged.connect(self.resize_thumbnails)
         self.slider_widget.setMinimum(10)
         self.slider_widget.setMaximum(300)
@@ -235,7 +234,7 @@ class HistoryWidget(QtWidgets.QWidget):
         # get document id for selected row
         row = self.table.verticalHeader().logicalIndexAt(pos)
         index = self.model.index(row, 0)
-        doc_id = self.model.data(index, Qt.DisplayRole)
+        doc_id = self.model.data(index, QtCore.Qt.DisplayRole)
 
         # get context menu selection
         result = self.context_menu.exec_(QtGui.QCursor.pos())
@@ -335,25 +334,26 @@ class HistoryWidget(QtWidgets.QWidget):
             return
 
         current_doc = Krita.instance().activeDocument()
+        active_filename = current_doc.fileName()
 
         old_date = self.model.history[doc_id]['date']
 
-        filename = os.path.join(self.model.utils.data_dir,
-                                self.model.history[doc_id]['dirname'],
-                                self.model.history[doc_id]['filename'])
-        if not os.path.exists(filename):
+        checkpoint_filename = os.path.join(self.model.utils.data_dir,
+                                           self.model.history[doc_id]['dirname'],
+                                           self.model.history[doc_id]['filename'])
+        if not os.path.exists(checkpoint_filename):
             self.in_progress.emit(False)
-            raise FileNotFoundError(filename)
+            raise FileNotFoundError(checkpoint_filename)
 
         self.status_update(
-            f'copying {filename} -> {self.model.utils.krita_filename}')
-        shutil.copyfile(filename, self.model.utils.krita_filename)
+            f'copying {checkpoint_filename} -> {active_filename}')
+        shutil.copyfile(checkpoint_filename, active_filename)
 
         self.status_update('closing old document')
         current_doc.close()
 
         self.status_update('Opening new document')
-        new_doc = Krita.instance().openDocument(self.model.utils.krita_filename)
+        new_doc = Krita.instance().openDocument(active_filename)
         Krita.instance().activeWindow().addView(new_doc)
         Krita.instance().setActiveDocument(new_doc)
 
@@ -425,7 +425,7 @@ class HistoryWidget(QtWidgets.QWidget):
                      date,
                      '(There is no undo)'):
             label = QtWidgets.QLabel(text)
-            label.setAlignment(Qt.AlignCenter)
+            label.setAlignment(QtCore.Qt.AlignCenter)
             layout.addWidget(label)
 
         # create ok/cancel buttons
@@ -623,7 +623,8 @@ class HistoryWidget(QtWidgets.QWidget):
         if doc.fileName() == "":
             return
 
-        self.status_update('reloading document history')
+        self.status_update(
+            'reloading document history {}'.format(doc.fileName()))
 
         vmutils = utils.Utils(doc.fileName())
 
