@@ -26,15 +26,24 @@ class QtDocker(DockWidget):
 
         self.setWidget(self._version_ui)
 
-        self.active_doc = None
+        self.last_filename = None
+
+        self.notifier = Krita.instance().notifier()
+        self.notifier.setActive(True)
+        self.notifier.imageSaved.connect(self.reload_history)
 
     def canvasChanged(self, canvas):
         """Reload the version manager if the active document changes"""
 
         doc = Krita.instance().activeDocument()
+        if (doc):
+            self.reload_history(doc.fileName())
 
-        if not self.active_doc or self.active_doc.fileName() != doc.fileName():
-            self.active_doc = doc
+    def reload_history(self, filename):
+        """Reload the version manager if the filename has changed"""
+
+        if self.last_filename != filename:
+            self.last_filename = filename
             self._version_ui.info_update('Switching documents')
             self._version_ui.history_widget.reload_history()
 

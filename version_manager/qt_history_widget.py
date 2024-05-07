@@ -358,7 +358,7 @@ class HistoryWidget(QtWidgets.QWidget):
         Krita.instance().setActiveDocument(new_doc)
 
         old_message = ast.literal_eval(self.model.history[doc_id]['message'])
-        self.add_checkpoint(msg=f'Copied from version: {old_date}\n\n{old_message}',
+        self.add_checkpoint(msg=f'Copied from version:\n{old_date}\n\n{old_message}',
                             autosave=True,
                             generate_thumbnail=True)
         self.reload_history()
@@ -623,10 +623,14 @@ class HistoryWidget(QtWidgets.QWidget):
         if doc.fileName() == "":
             return
 
+        vmutils = utils.Utils(doc.fileName())
+
+        # check for non-existing data directory
+        if not vmutils.data_dir_exists():
+            return
+
         self.status_update(
             'reloading document history {}'.format(doc.fileName()))
-
-        vmutils = utils.Utils(doc.fileName())
 
         vmutils.read_history()
 

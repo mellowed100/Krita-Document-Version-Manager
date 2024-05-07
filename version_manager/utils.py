@@ -226,13 +226,18 @@ class Utils(QtCore.QObject):
         modtime = os.path.getmtime(self.krita_filename)
 
         # more human readable form for displaying in history widget.
-        date = datetime.fromtimestamp(modtime).strftime(
-            '%m/%d/%Y\n%I:%M %p\n%A')
+        mod_date = datetime.fromtimestamp(modtime)
+        date_string = mod_date.strftime('%m/%d/%Y\n%I:%M %p\n%A')
+        date_file = mod_date.strftime('%Y_%m_%d__%H_%M_%S_%f')
 
         # name of directory to hold checkpoint data
-        dirname = datetime.fromtimestamp(
-            modtime).strftime('doc__%Y_%m_%d__%H_%M_%S_%f')
+        dirname = f'doc__{date_file}'
         doc_dir = os.path.join(self.data_dir, dirname)
+
+        filename_base, filename_ext = os.path.splitext(
+            os.path.basename(self.krita_filename))
+
+        checkpoint_filename = f'{filename_base}__{date_file}{filename_ext}'
 
         self.lock_history()
         self.read_history()
@@ -247,7 +252,7 @@ class Utils(QtCore.QObject):
         if os.path.exists(doc_dir):
             self.unlock_history()
             raise FileExistsError(
-                f'No modifications to save. A checkpoint for this timestamp already exists. {date}')
+                f'No modifications to save. A checkpoint for this timestamp already exists. {date_string}')
 
         doc_id = str(modtime)
 
@@ -264,10 +269,10 @@ class Utils(QtCore.QObject):
             owner = getpwuid(os.stat(self.krita_filename).st_uid).pw_name
 
         for key, value in (('mtime', modtime),
-                           ('filename', self.krita_basename),
+                           ('filename', checkpoint_filename),
                            ('dirname', dirname),
                            ('message', repr(msg)),
-                           ('date', date),
+                           ('date', date_string),
                            ('owner', owner)):
             self.history[doc_id][key] = value
 
@@ -276,7 +281,7 @@ class Utils(QtCore.QObject):
 
         # copy krita file to document data directory
         shutil.copyfile(self.krita_filename, os.path.join(
-            doc_dir, self.krita_basename))
+            doc_dir, checkpoint_filename))
 
         self.write_history()
         self.unlock_history()
