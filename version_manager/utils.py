@@ -1,16 +1,14 @@
 # SPDX-FileCopyrightText: © Cesar Velazquez <cesarve@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os
 import errno
-import shutil
 import json
+import os
+import shutil
 from datetime import datetime
+
 from PyQt5 import QtCore
 
 if os.name == "nt":
@@ -26,9 +24,15 @@ class Utils(QtCore.QObject):
     """Manages lower level operations for Krita document version manager"""
 
     history_template = {}
-    document_template = {'filename': '', 'thumbnail': '',
-                         'mtime': 0., 'dirname': '', 'message': '',
-                         'owner': '', 'date': ''}
+    document_template = {
+        "filename": "",
+        "thumbnail": "",
+        "mtime": 0.0,
+        "dirname": "",
+        "message": "",
+        "owner": "",
+        "date": "",
+    }
 
     # Signal to send text to debug console
     info_update = QtCore.pyqtSignal(str)
@@ -47,19 +51,20 @@ class Utils(QtCore.QObject):
         # check source krita document
         if not os.path.exists(self.krita_filename):
             raise FileNotFoundError(
-                errno.ENOENT, os.strerror(errno.ENOENT), self.krita_filename)
+                errno.ENOENT, os.strerror(errno.ENOENT), self.krita_filename
+            )
 
         # get absolute path to krita document
         self._krita_file = os.path.abspath(self.krita_filename)
 
-        self._krita_path, self._krita_basename = os.path.split(
-            self.krita_filename)
+        self._krita_path, self._krita_basename = os.path.split(self.krita_filename)
 
         # set path to document data directory
         self._version_directory = os.path.join(
-            self.krita_dir, '{}.d'.format(self.krita_basename))
+            self.krita_dir, "{}.d".format(self.krita_basename)
+        )
 
-        self._data_basename = 'history.json'
+        self._data_basename = "history.json"
         self._data_filename = os.path.join(self.data_dir, self._data_basename)
 
         # dictionary holding  ndata for all document versions
@@ -136,7 +141,8 @@ class Utils(QtCore.QObject):
                 shutil.rmtree(self.data_dir)
             else:
                 raise FileExistsError(
-                    f'Cannot initialize data directory. Directory already exists: {self.data_dir}')
+                    f"Cannot initialize data directory. Directory already exists: {self.data_dir}"
+                )
 
         os.makedirs(self.data_dir)
 
@@ -147,43 +153,41 @@ class Utils(QtCore.QObject):
     def write_history(self):
         """Writes document history to json"""
 
-        with open(self.history_filename, 'w') as file_out:
+        with open(self.history_filename, "w") as file_out:
             json.dump(self.history, file_out, sort_keys=True, indent=4)
 
     def read_history(self):
         """Loads document history from disk"""
 
         if not os.path.exists(self.history_filename):
-            raise FileNotFoundError(f'File not found: {self.history_filename}')
+            raise FileNotFoundError(f"File not found: {self.history_filename}")
 
-        with open(self.history_filename, 'r') as file_in:
+        with open(self.history_filename, "r") as file_in:
             self._history = json.load(file_in)
 
     def lock_history(self):
         """Locks history json file"""
 
-        lock_filename = os.path.join(
-            self.data_dir, f'{self.history_basename}.lock')
+        lock_filename = os.path.join(self.data_dir, f"{self.history_basename}.lock")
 
-        self.status_update(f'Getting lock on {lock_filename}')
+        self.status_update(f"Getting lock on {lock_filename}")
 
         self._lockfile = QtCore.QLockFile(lock_filename)
 
         result = self._lockfile.tryLock(15)
 
         if not result:
-            reason = ''
+            reason = ""
             if result == QtCore.QLockFile.NoError:
-                reason = 'NoError'
+                reason = "NoError"
             elif result == QtCore.QLockFile.LockFailedError:
-                reason = 'LockFailedError'
+                reason = "LockFailedError"
             elif result == QtCore.QLockFile.PermissionError:
-                reason = 'PermissionError'
+                reason = "PermissionError"
             else:
-                reason = 'UnknownError'
-            raise Exception(
-                f'Unable to obtain file lock on {lock_filename}: {reason}')
-        self.status_update('Lock aquired')
+                reason = "UnknownError"
+            raise Exception(f"Unable to obtain file lock on {lock_filename}: {reason}")
+        self.status_update("Lock aquired")
 
     def unlock_history(self):
         """Unlock history json file"""
@@ -202,42 +206,43 @@ class Utils(QtCore.QObject):
         self.lock_history()
         self.read_history()
         if doc_id not in self.history:
-            raise IndexError(f'unknown document index {doc_id}')
-        self.history[doc_id]['message'] = repr(msg)
+            raise IndexError(f"unknown document index {doc_id}")
+        self.history[doc_id]["message"] = repr(msg)
         self.write_history()
         self.unlock_history()
 
-    def add_checkpoint(self, msg=''):
+    def add_checkpoint(self, msg=""):
         """Adds a new checkpoint for the krita document.
 
-            This will store a copy of the krita file as well as
-            a thumbnail and checkpoint metadata.
+        This will store a copy of the krita file as well as
+        a thumbnail and checkpoint metadata.
 
 
-            Arguments:
-            msg - str: Checkpoint message
-            """
+        Arguments:
+        msg - str: Checkpoint message
+        """
 
         # check that krita file exists
         if not os.path.exists(self.krita_filename):
-            raise FileNotFoundError(f'File not found: {self.krita_filename}')
+            raise FileNotFoundError(f"File not found: {self.krita_filename}")
 
         # get modification time of krita file
         modtime = os.path.getmtime(self.krita_filename)
 
         # more human readable form for displaying in history widget.
         mod_date = datetime.fromtimestamp(modtime)
-        date_string = mod_date.strftime('%m/%d/%Y\n%I:%M %p\n%A')
-        date_file = mod_date.strftime('%Y_%m_%d__%H_%M_%S_%f')
+        date_string = mod_date.strftime("%m/%d/%Y\n%I:%M %p\n%A")
+        date_file = mod_date.strftime("%Y_%m_%d__%H_%M_%S_%f")
 
         # name of directory to hold checkpoint data
-        dirname = f'doc__{date_file}'
+        dirname = f"doc__{date_file}"
         doc_dir = os.path.join(self.data_dir, dirname)
 
         filename_base, filename_ext = os.path.splitext(
-            os.path.basename(self.krita_filename))
+            os.path.basename(self.krita_filename)
+        )
 
-        checkpoint_filename = f'{filename_base}__{date_file}{filename_ext}'
+        checkpoint_filename = f"{filename_base}__{date_file}{filename_ext}"
 
         self.lock_history()
         self.read_history()
@@ -246,42 +251,45 @@ class Utils(QtCore.QObject):
         if dirname in self.history:
             self.unlock_history()
             raise Exception(
-                'Timestamp for this version of the krita file already exists')
+                "Timestamp for this version of the krita file already exists"
+            )
 
         # quit if a document directory for this timestamp already exists
         if os.path.exists(doc_dir):
             self.unlock_history()
             raise FileExistsError(
-                f'No modifications to save. A checkpoint for this timestamp already exists. {date_string}')
+                f"No modifications to save. A checkpoint for this timestamp already exists. {date_string}"
+            )
 
         doc_id = str(modtime)
 
         # create copy of document dictionary template
         self.history[doc_id] = Utils.document_template.copy()
 
-        if os.name == 'nt':
+        if os.name == "nt":
             # sd = win32security.GetFileSecurity(self.krita_filename, win32security.OWNER_SECURITY_INFORMATION)
             # owner_sid = sd.GetSecurityDescriptorOwner()
             # name, domain, type = win32security.LookupAccountSid(None, owner_sid)
             # owner = name
-            owner = ''
+            owner = ""
         else:
             owner = getpwuid(os.stat(self.krita_filename).st_uid).pw_name
 
-        for key, value in (('mtime', modtime),
-                           ('filename', checkpoint_filename),
-                           ('dirname', dirname),
-                           ('message', repr(msg)),
-                           ('date', date_string),
-                           ('owner', owner)):
+        for key, value in (
+            ("mtime", modtime),
+            ("filename", checkpoint_filename),
+            ("dirname", dirname),
+            ("message", repr(msg)),
+            ("date", date_string),
+            ("owner", owner),
+        ):
             self.history[doc_id][key] = value
 
         # make document data directory
         os.makedirs(doc_dir)
 
         # copy krita file to document data directory
-        shutil.copyfile(self.krita_filename, os.path.join(
-            doc_dir, checkpoint_filename))
+        shutil.copyfile(self.krita_filename, os.path.join(doc_dir, checkpoint_filename))
 
         self.write_history()
         self.unlock_history()
