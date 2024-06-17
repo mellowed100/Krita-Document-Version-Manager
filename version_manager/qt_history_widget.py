@@ -51,7 +51,7 @@ class HistoryModel(QtCore.QAbstractTableModel):
             [
                 key,
                 self._history[key]["thumbnail"],
-                self._history[key]["date"],
+                "{}\n{}".format(self._history[key]["date"], key),
                 ast.literal_eval(self._history[key]["message"]),
             ]
             for key in reversed(sorted(self._history))
@@ -158,7 +158,7 @@ class HistoryWidget(QtWidgets.QWidget):
         self.table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.context_menu)
 
-        self.table.doubleClicked.connect(self.foo)
+        self.table.doubleClicked.connect(self.double_click_row)
 
         layout.addWidget(self.table)
 

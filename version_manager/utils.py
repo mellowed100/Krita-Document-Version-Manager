@@ -232,6 +232,7 @@ class Utils(QtCore.QObject):
         # more human readable form for displaying in history widget.
         mod_date = datetime.fromtimestamp(modtime)
         date_string = mod_date.strftime("%m/%d/%Y\n%I:%M %p\n%A")
+        # date_string += f"\n{mod_date}"
         date_file = mod_date.strftime("%Y_%m_%d__%H_%M_%S_%f")
 
         # name of directory to hold checkpoint data
