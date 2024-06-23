@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import errno
 import json
 import os
+import random
 import shutil
 from datetime import datetime
 
@@ -235,6 +236,14 @@ class Utils(QtCore.QObject):
         # date_string += f"\n{mod_date}"
         date_file = mod_date.strftime("%Y_%m_%d__%H_%M_%S_%f")
 
+        self.lock_history()
+        self.read_history()
+
+        short_id = 0
+        while short_id in [int(self.history[entry]["id"]) for entry in self.history]:
+            short_id += 1
+        short_id = "{:04}".format(short_id)
+
         # name of directory to hold checkpoint data
         dirname = f"doc__{date_file}"
         doc_dir = os.path.join(self.data_dir, dirname)
@@ -243,10 +252,8 @@ class Utils(QtCore.QObject):
             os.path.basename(self.krita_filename)
         )
 
-        checkpoint_filename = f"{filename_base}__{date_file}{filename_ext}"
-
-        self.lock_history()
-        self.read_history()
+        # checkpoint_filename = f"{filename_base}__{date_file}{filename_ext}"
+        checkpoint_filename = f"{filename_base}__{short_id}{filename_ext}"
 
         # quit if an entry for this timestamp already exists
         if dirname in self.history:
@@ -283,6 +290,7 @@ class Utils(QtCore.QObject):
             ("message", repr(msg)),
             ("date", date_string),
             ("owner", owner),
+            ("id", short_id),
         ):
             self.history[doc_id][key] = value
 

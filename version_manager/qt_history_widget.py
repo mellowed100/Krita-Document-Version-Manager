@@ -51,7 +51,8 @@ class HistoryModel(QtCore.QAbstractTableModel):
             [
                 key,
                 self._history[key]["thumbnail"],
-                "{}\n{}".format(self._history[key]["date"], key),
+                # "{}\n{}".format(self._history[key]["date"], key),
+                "{}\n{}".format(self._history[key]["date"], self._history[key]["id"]),
                 ast.literal_eval(self._history[key]["message"]),
             ]
             for key in reversed(sorted(self._history))
